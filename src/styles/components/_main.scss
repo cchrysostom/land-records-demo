@@ -1,0 +1,115 @@
+html, body {
+  background-color: #f8f9fa;
+  font-family: 'Roboto', sans-serif;
+}
+
+html, body, #app, #app-container {
+  height: 100%;
+}
+
+.app-content {
+  padding: 80px 0;
+}
+
+/* Typography */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', sans-serif;
+  font-style: normal;
+  font-stretch: normal;
+  letter-spacing: normal;
+  color: #2e3337;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: normal;
+  line-height: 1.29;
+  text-align: center;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: normal;
+  text-align: left;
+}
+
+/* Content */
+
+.hr-line {
+  position: relative;
+}
+
+.hr-line span {
+  font-size: 14px;
+  font-weight: 500;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  text-align: center;
+  color: #2e3337;
+}
+.hr-line:before, .hr-line:after {
+  content: '';
+  position: absolute;
+  border-bottom: 1px solid #dbe0e9;
+  width: calc(50% - 18px);
+  top: 13px; 
+}
+.hr-line:before {
+  left: 0;
+}
+.hr-line:after {
+  right: 0;
+}
+
+/* List Group */
+
+.list-group-item {
+  padding: 13px;
+  .list-meta {
+    font-size: 14px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    text-align: left;
+    color: #2e3337;
+  }
+}
+
+/* Toast */
+
+.toast {
+  position: absolute;
+  top: 79px;
+  left: 0;
+  height: 96px;
+  background-color: #008fff;
+  width: 100%;
+  z-index: 99;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-transform: translateY(0);
+  transform: translateY(0);
+  -webkit-transition: .3s ease all;
+  transition: .3s ease all;
+  &.hide {
+    -webkit-transform: translateY(-97px);
+    transform: translateY(-97px);
+  }
+  .message {
+    font-size: 18px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.33;
+    letter-spacing: normal;
+    text-align: center;
+    color: #ffffff;
+  }
+}

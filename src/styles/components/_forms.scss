@@ -1,0 +1,101 @@
+input, .form-control{
+  font-size: 12px;
+  padding: 15px;
+  font-weight: normal;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.33;
+  letter-spacing: normal;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.38);
+  border: 1px solid #dbe0e9;
+}
+
+.btn, .btn + label {
+  min-height: 34px;
+  border-radius: 16px;
+  padding-left: 15px;
+  padding-right: 15px;
+  font-size: 14px;
+  font-weight: 500;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  text-align: center;
+  &.inputfile {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+    + label {
+      color: #007bff;
+      border: 1px solid #007bff;
+      display: inline-block;
+      line-height: 1;
+      padding: 9px;
+      min-width: 200px;
+      margin-bottom: 0;
+      background-color: #ffffff;
+    }
+    &:focus + label,
+    + label:hover {
+        background-color: #007bff;
+        color: #ffffff;
+    }
+    + label {
+      cursor: pointer; /* "hand" cursor */
+    }
+    :focus + label {
+      outline: 1px dotted #007bff;
+      outline: -webkit-focus-ring-color auto 5px;
+    }
+  }
+}
+
+.btn-outline-primary {
+  background: #fff;
+}
+
+label {
+  font-size: 14px;
+  font-weight: normal;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2e3337;
+}
+
+.header-search {
+  padding: 9px;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.33;
+  letter-spacing: normal;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.38);
+  border-right: none;
+  border-radius: 5px 0 0 5px;
+  min-width: 275px;
+  + div button {
+    background: #fff;
+    margin-left: -7px;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    &:hover {
+      background: #fff;
+    }
+  }
+}
+
+select, select.form-control, select.form-control:not([size]):not([multiple]) {
+  padding: 5px;
+  font-size: 12px;
+  height: 30px;
+  line-height: 1;
+}
