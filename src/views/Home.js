@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import domtoimage from 'dom-to-image';
-
+import ipfsAPI from 'ipfs-api';
 import remove from '../images/remove.svg';
 
 export default class Home extends Component {
@@ -25,10 +25,252 @@ export default class Home extends Component {
       toastActive: false,
       toastMessage: ''
     }
+    this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
   }
 
   componentDidMount() {
     this.initAutocomplete()
+  }
+
+  captureFile (files) {
+    event.stopPropagation()
+    event.preventDefault()
+
+    let filesCount = files.length
+    let loadendCount = filesCount
+    let readers = []
+    for (let i=0; i < filesCount; i++) {
+      let file = files[i]
+      let reader = new window.FileReader()
+      reader.onloadend = () => { 
+        readers.push(reader)
+        if (!--loadendCount) this.saveToIpfs(readers)
+      }
+      reader.readAsArrayBuffer(file)
+    }
+  }
+
+  saveToIpfs (readers) {
+    let ipfsId
+    console.log(readers)
+    let buffers = []
+    readers.forEach((r) => {
+      let buffer = Buffer.from(r.result)
+      buffers.push(buffer)
+    })
+
+    this.ipfsApi.add(buffers, { progress: (prog) => console.log(`received: ${prog}`), wrapWithDirectory: true })
+      .then((response) => {
+        console.log(response)
+        // Grab last hash for IPFS dag. Assuming it is the last response.
+        ipfsId = response[response.length-1].hash
+        this.setState({storage_location: ipfsId}) 
+      }).catch((err) => {
+        console.error(err)
+      })
+  }
+
+  oipSign(signRequest, signResult) {
+    console.log(signRequest)
+    let signHeaders = new Headers()
+    signHeaders.append('Content-Type', 'application/json')
+
+    let postInit = {
+      method: 'POST',
+      headers: signHeaders,
+      body: JSON.stringify(signRequest)
+    }
+
+    fetch('http://35.230.92.250:41289/alexandria/v1/sign', postInit)
+      .then((response) => {
+        return response.json()
+      })
+      .then((json) => {
+        signResult(json.response[0])
+      })
+  }
+
+  oipSend(sendRequest, sendResult) {
+    console.log(sendRequest)
+    let sendHeaders = new Headers()
+    sendHeaders.append('Content-Type', 'plain/text')
+
+    let postInit = {
+      method: 'POST',
+      headers: sendHeaders,
+      body: 'json:' + JSON.stringify(sendRequest)
+    }
+    
+    fetch('http://35.230.92.250:41289/alexandria/v1/send', postInit)
+      .then((response) => {
+        return response.json()
+      })
+      .then((json) => {
+        console.log('/v1/send', JSON.stringify(json))
+        sendResult(json)
+      })
+    
+  }
+
+  createParty(partyName, partyDescription, partyYear, postPartyTxid) {
+    let ts = Math.round((new Date()).getTime() / 1000);
+    let dummyLocation = 'dummylocationforparty'
+    let publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
+    let sigPreimage = dummyLocation + '-' + publisher + '-' + ts.toString()
+
+    let pubArtifact = { oip042: 
+      { publish: {
+          artifact: {
+            floAddress: publisher,
+            timestamp: ts,
+            type: 'property',
+            subtype: 'party',
+            info: {
+              title: partyName,
+              description: partyDescription,
+              year: 2018
+            },
+            storage: {
+              network: 'IPFS',
+              location: dummyLocation
+            },
+            details: {
+              ns: 'MLG',
+              partyType: 'naturalPerson', partyRole: 'individual'
+            },
+            signature: ''
+          }
+        }
+      }
+    }
+
+    this.oipSign({address:'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr',text:sigPreimage},
+      (sigText) => {
+        pubArtifact.oip042.publish.artifact.signature = sigText
+        this.oipSend(pubArtifact, (pubResult) => {
+            postPartyTxid(pubResult.response[0])
+        })
+      }
+    )
+  }
+
+  createSpatialUnit(locationName,
+     locationDescription,
+     locationYear,
+     files,
+     polygonCoords,
+     bbox,
+     postSpatiTxid) {
+
+    let ts = Math.round((new Date()).getTime() / 1000);
+    let dummyLocation = 'dummyipfsaddressforthisspatialunit'
+    let publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
+    let sigPreimage = dummyLocation + '-' + publisher + '-' + ts.toString()
+    let name = 'Property ' + Math.floor(Math.random() * 10000);
+
+    let pubSpat = { oip042: 
+      { publish: {
+          artifact: {
+            floAddress: publisher,
+            timestamp: ts,
+            type: 'property',
+            subtype: 'spatialUnit',
+            info: {
+              title: name,
+              description: "Some long description of this spatial unit's location",
+              year: 2018
+            },
+            storage: {
+              network: 'IPFS',
+              location: dummyLocation,
+              files: []
+            },
+            details: {
+              ns: 'MLG',
+              spatialType: 'polygon',
+              geometry: {
+                type: 'geojson',
+                data: {}
+              },
+              bbox: [ ]
+            },
+            signature: ''
+          }
+        }
+      }
+    }
+
+    this.oipSign({address:'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr',text:sigPreimage},
+            (sigText) => {
+              pubSpat.oip042.publish.artifact.signature = sigText
+              this.oipSend(pubSpat, (pubResult) => {
+                postSpatiTxid(pubResult.response[0])
+              })
+            }
+        )
+  }
+
+  createTenure(tenureName,
+     tenureDescription,
+     tenureYearStart,
+     files,
+     
+      postTenureTxid) {
+    let partyTxid = ''
+    let spatTxid = ''
+    this.createRandomPublishParty((partyPub) => {
+      console.log('partyPub', partyPub)
+      partyTxid = partyPub
+
+      this.handlePartyResult(partyPub)
+
+      this.createRandomSpatialUnit((spatPub) => {
+        spatTxid = spatPub
+        this.handleSpatResult(spatPub)
+        let ts = Math.round((new Date()).getTime() / 1000);
+        let dummyLocation = 'dummyipfsaddressforthistenure'
+        let publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
+        let sigPreimage = dummyLocation + '-' + publisher + '-' + ts.toString()
+        let tenureName = 'Tenure Right ' + Math.floor(Math.random() * 10000);
+
+        let pubTenure = { oip042: 
+          { publish: {
+              artifact: {
+                floAddress: publisher,
+                timestamp: ts,
+                type: 'property',
+                subtype: 'tenure',
+                info: {
+                  title: tenureName,
+                  description: "Some long description of this property's tenure.",
+                  year: 2018
+                },
+                storage: {
+                  network: 'IPFS',
+                  location: dummyLocation
+                },
+                details: {
+                  ns: 'MLG',
+                  party: partyTxid,
+                  spatialUnit: spatTxid,
+                  tenureType: 'FREEHOLD'
+                },
+                signature: ''
+              }
+            }
+          }
+        }
+
+        this.oipSign({address:'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr',text:sigPreimage},
+            (sigText) => {
+              pubTenure.oip042.publish.artifact.signature = sigText
+              this.oipSend(pubTenure, (pubResult) => {
+                postTenureTxid(pubResult.response[0])
+              })
+            }
+        )
+      })
+    })
   }
 
   handlePropertyChange = (e) => {
