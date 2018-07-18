@@ -26,6 +26,7 @@ export default class Home extends Component {
       toastMessage: ''
     }
     this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
+    this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
   }
 
   componentDidMount() {
@@ -33,9 +34,6 @@ export default class Home extends Component {
   }
 
   captureFile (files) {
-    event.stopPropagation()
-    event.preventDefault()
-
     let filesCount = files.length
     let loadendCount = filesCount
     let readers = []
@@ -115,13 +113,12 @@ export default class Home extends Component {
   createParty(partyName, partyDescription, partyYear, postPartyTxid) {
     let ts = Math.round((new Date()).getTime() / 1000);
     let dummyLocation = 'dummylocationforparty'
-    let publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
-    let sigPreimage = dummyLocation + '-' + publisher + '-' + ts.toString()
+    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
 
     let pubArtifact = { oip042: 
       { publish: {
           artifact: {
-            floAddress: publisher,
+            floAddress: this.publisher,
             timestamp: ts,
             type: 'property',
             subtype: 'party',
@@ -144,7 +141,7 @@ export default class Home extends Component {
       }
     }
 
-    this.oipSign({address:'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr',text:sigPreimage},
+    this.oipSign({address:this.publisher,text:sigPreimage},
       (sigText) => {
         pubArtifact.oip042.publish.artifact.signature = sigText
         this.oipSend(pubArtifact, (pubResult) => {
@@ -164,21 +161,19 @@ export default class Home extends Component {
 
     let ts = Math.round((new Date()).getTime() / 1000);
     let dummyLocation = 'dummyipfsaddressforthisspatialunit'
-    let publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
-    let sigPreimage = dummyLocation + '-' + publisher + '-' + ts.toString()
-    let name = 'Property ' + Math.floor(Math.random() * 10000);
+    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
 
     let pubSpat = { oip042: 
       { publish: {
           artifact: {
-            floAddress: publisher,
+            floAddress: this.publisher,
             timestamp: ts,
             type: 'property',
             subtype: 'spatialUnit',
             info: {
-              title: name,
-              description: "Some long description of this spatial unit's location",
-              year: 2018
+              title: locationName,
+              description: locationDescription,
+              year: locationYear
             },
             storage: {
               network: 'IPFS',
@@ -190,9 +185,9 @@ export default class Home extends Component {
               spatialType: 'polygon',
               geometry: {
                 type: 'geojson',
-                data: {}
+                data: { polygonCoords }
               },
-              bbox: [ ]
+              bbox: bbox
             },
             signature: ''
           }
@@ -200,7 +195,7 @@ export default class Home extends Component {
       }
     }
 
-    this.oipSign({address:'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr',text:sigPreimage},
+    this.oipSign({address:this.publisher,text:sigPreimage},
             (sigText) => {
               pubSpat.oip042.publish.artifact.signature = sigText
               this.oipSend(pubSpat, (pubResult) => {
@@ -214,62 +209,90 @@ export default class Home extends Component {
      tenureDescription,
      tenureYearStart,
      files,
-     
-      postTenureTxid) {
-    let partyTxid = ''
-    let spatTxid = ''
-    this.createRandomPublishParty((partyPub) => {
-      console.log('partyPub', partyPub)
-      partyTxid = partyPub
+     partyTxid,
+     spatialUnitTxid,
+     postTenureTxid) {
+    let ts = Math.round((new Date()).getTime() / 1000);
+    let dummyLocation = 'dummyipfsaddressforthistenure'
+    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
 
-      this.handlePartyResult(partyPub)
-
-      this.createRandomSpatialUnit((spatPub) => {
-        spatTxid = spatPub
-        this.handleSpatResult(spatPub)
-        let ts = Math.round((new Date()).getTime() / 1000);
-        let dummyLocation = 'dummyipfsaddressforthistenure'
-        let publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
-        let sigPreimage = dummyLocation + '-' + publisher + '-' + ts.toString()
-        let tenureName = 'Tenure Right ' + Math.floor(Math.random() * 10000);
-
-        let pubTenure = { oip042: 
-          { publish: {
-              artifact: {
-                floAddress: publisher,
-                timestamp: ts,
-                type: 'property',
-                subtype: 'tenure',
-                info: {
-                  title: tenureName,
-                  description: "Some long description of this property's tenure.",
-                  year: 2018
-                },
-                storage: {
-                  network: 'IPFS',
-                  location: dummyLocation
-                },
-                details: {
-                  ns: 'MLG',
-                  party: partyTxid,
-                  spatialUnit: spatTxid,
-                  tenureType: 'FREEHOLD'
-                },
-                signature: ''
-              }
-            }
+    let pubTenure = { oip042: 
+      { publish: {
+          artifact: {
+            floAddress: this.publisher,
+            timestamp: ts,
+            type: 'property',
+            subtype: 'tenure',
+            info: {
+              title: tenureName,
+              description: tenureDescription,
+              year: tenureYearStart
+            },
+            storage: {
+              network: 'IPFS',
+              location: dummyLocation
+            },
+            details: {
+              ns: 'MLG',
+              party: partyTxid,
+              spatialUnit: spatialUnitTxid,
+              tenureType: 'FREEHOLD'
+            },
+            signature: ''
           }
         }
+      }
+    }
 
-        this.oipSign({address:'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr',text:sigPreimage},
-            (sigText) => {
-              pubTenure.oip042.publish.artifact.signature = sigText
-              this.oipSend(pubTenure, (pubResult) => {
-                postTenureTxid(pubResult.response[0])
-              })
-            }
-        )
-      })
+    this.oipSign({address:this.publisher,text:sigPreimage},
+        (sigText) => {
+          pubTenure.oip042.publish.artifact.signature = sigText
+          this.oipSend(pubTenure, (pubResult) => {
+            postTenureTxid(pubResult.response[0])
+          })
+        }
+    )
+  }
+
+  publishPropertyRecord(
+    partyName,
+    partyDescription,
+    partyYearStart,
+    locationName,
+    locationDescription,
+    locationYearStart,
+    locationFiles,
+    polygonCoords,
+    bbox,
+    tenureName,
+    tenureDescription,
+    tenureYearStart,
+    tenureFiles,
+    postArtifactTxids
+  ) {
+    let partyTxid = ''
+    let spatialTxid = ''
+    this.createParty(partyName, partyDescription, partyYearStart, (resultPartyTxid) => {
+      partyTxid = resultPartyTxid
+      this.createSpatialUnit(locationName, 
+                             locationDescription, 
+                             locationYearStart, 
+                             locationFiles, 
+                             polygonCoords, 
+                             bbox, 
+                             (resultSpatTxid) => {
+          spatialTxid = resultSpatTxid
+          this.createTenure(tenureName,
+                            tenureDescription,
+                            tenureYearStart,
+                            tenureFiles,
+                            partyTxid,
+                            spatialTxid,
+                            (resultTenureTxid) => {
+                              postArtifactTxids(partyTxid, spatialTxid, resultTenureTxid)
+                            }
+                        )
+        })
     })
   }
 
@@ -446,7 +469,28 @@ export default class Home extends Component {
   publishProperty = (e) => {
     e.preventDefault();
     let map = document.getElementById('map');
+    const partyName = "Jehannete the Dragonslayer"
+    const partyDescription = "Slayer of dragons from The Misty Abyss"
 
+    this.publishPropertyRecord(partyName,
+                               partyDescription,
+                               2018,
+                               this.state.propertyForm.name,
+                               this.state.propertyForm.description,
+                               2018,
+                               [],
+                               this.state.polygonCoords,
+                               [],
+                               partyName + ' ' + this.state.propertyForm.name,
+                               partyName + ' ownership of ' + this.state.propertyForm.name,
+                               2018,
+                               this.state.propertyForm.documents,
+                               (party, spatial, tenure) => {
+                                 console.log('Party: ' + party + ', Location: ' + spatial + ', Tenure: ' + tenure)
+                               }
+                              )
+
+/*                              
     domtoimage.toPng(map)
       .then(dataUrl => {
         var img = new Image();
@@ -456,6 +500,7 @@ export default class Home extends Component {
       .catch(error => {
         console.error('oops, something went wrong!', error);
       });
+*/
   }
 
   render() {
