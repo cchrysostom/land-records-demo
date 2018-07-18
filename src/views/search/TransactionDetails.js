@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import { TransactionCard } from '../components/transaction-card'
+import { TransactionCard } from '../../components/transaction-card'
 
-const Transactions = props => {
+const TransactionDetails = props => {
   return (
     <div>
       <div className="row mt-4 mb-3">
@@ -17,3 +17,5 @@ const Transactions = props => {
     </div>
   )
 }
+
+export default TransactionDetails
