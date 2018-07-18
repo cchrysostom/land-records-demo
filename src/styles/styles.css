@@ -88,9 +88,9 @@ label {
       background: #fff; }
 
 select, select.form-control, select.form-control:not([size]):not([multiple]) {
-  padding: 5px;
+  padding: 4px;
   font-size: 12px;
-  height: 30px;
+  height: 28px;
   line-height: 1; }
 
 .map-container {
@@ -119,6 +119,15 @@ select, select.form-control, select.form-control:not([size]):not([multiple]) {
   line-height: 1;
   cursor: pointer;
   padding: 4px 6px; }
+
+.list-group .list-group-item .document {
+  width: 61px;
+  height: 61px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaecf1;
+  margin-right: 10px; }
 
 html, body {
   background-color: #f8f9fa;

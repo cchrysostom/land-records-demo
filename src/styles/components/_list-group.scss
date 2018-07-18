@@ -19,5 +19,14 @@
         padding: 4px 6px;
       }
     }
+    .document {
+      width: 61px;
+      height: 61px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eaecf1;
+      margin-right: 10px;
+    }
   }
 }

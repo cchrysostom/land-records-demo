@@ -1,0 +1,70 @@
+import React from 'react'
+
+import remove from '../../images/remove.svg';
+import docSvg from '../../images/doc-svg.svg';
+
+const StepTwo = props => {
+  console.log(props)
+  let documents = props.propertyForm.documents.map((file, i) => {
+    return (
+      <li className="list-group-item d-flex" key={file.name + i}>
+        {file.thumbnail ? <img src={file.thumbnail} alt=""/> : (
+          <div className="document">
+            <img src={docSvg} alt="document"/>
+          </div>
+        )}
+        <div className="list-meta">
+          <div className="title">{file.name}</div>
+          <select name="type" className="form-control mt-2">
+            <option value="">Please select document type</option>
+            <option value="ownership">This document proves ownership.</option>
+            <option value="location">This document proves location.</option>
+            <option value="other">Other (uncategorized).</option>
+          </select>
+        </div>
+        <span className="actions ml-auto">
+          <button className="action-button"><img src={remove} alt="remove document" /></button>
+        </span>
+      </li>
+    )
+  })
+
+  return (
+    <div className="mt-5">
+      <div className="map-container mb-5">
+        <div id="map"></div>
+      </div>
+      <div style={{ maxWidth: '480px' }} className="m-auto">
+        <div className="form-group">
+          <label>Property Name (Required)</label>
+          <input name="name" value={props.propertyForm.name} type="text" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Property Description (Optional)</label>
+          <textarea name="description" value={props.propertyForm.description} rows="5" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange}></textarea>
+        </div>
+        <div className="form-group">
+          <label className="d-block mb-3">Add Supporting Documents (Optional)</label>
+          <input type="file" name="documents" id="documents" placeholder="Choose Files" className="inputfile btn btn-sm btn-outline-primary d-block" style={{ minWidth: '200px' }} onChange={props.readFilesIntoObject} multiple />
+          <label htmlFor="documents" className="d-block d-md-inline-block">Choose Files</label>
+        </div>
+        {props.propertyForm.documents.length > 0 ? (
+          <div className="form-group form-files">
+            <ul className="list-group">
+              {documents}
+            </ul>
+          </div>
+        ) : (
+          <div className="form-group mb-5">
+            <textarea rows="12" className="form-control bg-white" disabled="true" placeholder="Upload Documents support this property belongs to you. (eg. JPG, PNG, PDF, TIFF, TXT, MPEG3, MPEG4)"></textarea>
+          </div>
+        )}
+        <div className="form-group m-auto text-center">
+          <button type="submit" className="btn btn-primary btn-sm" style={{ minWidth: '180px' }} onClick={props.publishProperty}>Publish Property</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default StepTwo
