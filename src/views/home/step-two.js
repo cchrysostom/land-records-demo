@@ -37,11 +37,11 @@ const StepTwo = props => {
       <div style={{ maxWidth: '480px' }} className="m-auto">
         <div className="form-group">
           <label>Property Name (Required)</label>
-          <input name="name" value={props.propertyForm.name} type="text" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange} />
+          <input name="spatialName" value={props.propertyForm.spatialName} type="text" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange} />
         </div>
         <div className="form-group">
           <label>Property Description (Optional)</label>
-          <textarea name="description" value={props.propertyForm.description} rows="5" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange}></textarea>
+          <textarea name="spatialDescription" value={props.propertyForm.spatialDescription} rows="5" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange}></textarea>
         </div>
         <div className="form-group">
           <label className="d-block mb-3">Add Supporting Documents (Optional)</label>

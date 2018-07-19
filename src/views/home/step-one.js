@@ -13,9 +13,9 @@ const StepOne = props => {
             <label className="text-left d-block ml-2 mb-2">Name</label>
             <input
               type="text"
-              name="name"
+              name="partyName"
               required
-              value={props.propertyForm.name}
+              value={props.propertyForm.partyName}
               className="form-control mb-3"
               placeholder="Your Name"
               onChange={props.handlePropertyChange}
