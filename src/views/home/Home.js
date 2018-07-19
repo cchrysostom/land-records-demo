@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import domtoimage from 'dom-to-image';
+import ipfsAPI from 'ipfs-api';
 import StepOne from './step-one';
 import StepTwo from './step-two';
 
@@ -18,17 +19,292 @@ export default class Home extends Component {
       autocomplete: null,
       manualAddress: '',
       propertyForm: {
-        name: '',
+        partyName: '',
+        spatialName: '',
         description: '',
         documents: []
       },
       toastActive: false,
       toastMessage: ''
-    }
+      }
+      this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
+      this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
   }
 
   componentDidMount() {
     this.initAutocomplete()
+  }
+
+  captureFile (files, captureFileCb) {
+    let filesCount = files.length
+    let loadendCount = filesCount
+    let readers = []
+    for (let i=0; i < filesCount; i++) {
+      let file = files[i]
+      let reader = new window.FileReader()
+      reader.onloadend = () => { 
+        readers.push(reader)
+        if (!--loadendCount) this.saveToIpfs(readers, captureFileCb)
+      }
+      reader.readAsArrayBuffer(file)
+    }
+  }
+
+  saveToIpfs (readers, saveIpfsCb) {
+    let ipfsId
+    console.log(readers)
+    let buffers = []
+    readers.forEach((r) => {
+      let buffer = Buffer.from(r.result)
+      buffers.push(buffer)
+    })
+
+    this.ipfsApi.add(buffers, { progress: (prog) => console.log(`received: ${prog}`), wrapWithDirectory: true })
+      .then((response) => {
+        console.log(response)
+        // Grab last hash for IPFS dag. Assuming it is the last response.
+        ipfsId = response[response.length-1].hash
+        saveIpfsCb(ipfsId)
+      }).catch((err) => {
+        console.error(err)
+      })
+  }
+
+  oipSign(signRequest, signResult) {
+    console.log(signRequest)
+    let signHeaders = new Headers()
+    signHeaders.append('Content-Type', 'application/json')
+
+    let postInit = {
+      method: 'POST',
+      headers: signHeaders,
+      body: JSON.stringify(signRequest)
+    }
+
+    fetch('http://35.230.92.250:41289/alexandria/v1/sign', postInit)
+      .then((response) => {
+        return response.json()
+      })
+      .then((json) => {
+        signResult(json.response[0])
+      })
+  }
+
+  oipSend(sendRequest, sendResult) {
+    console.log(sendRequest)
+    let sendHeaders = new Headers()
+    sendHeaders.append('Content-Type', 'plain/text')
+
+    let postInit = {
+      method: 'POST',
+      headers: sendHeaders,
+      body: 'json:' + JSON.stringify(sendRequest)
+    }
+    
+    fetch('http://35.230.92.250:41289/alexandria/v1/send', postInit)
+      .then((response) => {
+        return response.json()
+      })
+      .then((json) => {
+        console.log('/v1/send', JSON.stringify(json))
+        sendResult(json)
+      })
+    
+  }
+
+  createParty(partyName, partyDescription, partyYear, postPartyTxid) {
+    let ts = Math.round((new Date()).getTime() / 1000);
+    let dummyLocation = 'dummylocationforparty'
+    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
+
+    let pubArtifact = { oip042: 
+      { publish: {
+          artifact: {
+            floAddress: this.publisher,
+            timestamp: ts,
+            type: 'property',
+            subtype: 'party',
+            info: {
+              title: partyName,
+              description: partyDescription,
+              year: 2018
+            },
+            storage: {
+              network: 'IPFS',
+              location: dummyLocation
+            },
+            details: {
+              ns: 'MLG',
+              partyType: 'naturalPerson', partyRole: 'individual'
+            },
+            signature: ''
+          }
+        }
+      }
+    }
+
+    this.oipSign({address:this.publisher,text:sigPreimage},
+      (sigText) => {
+        pubArtifact.oip042.publish.artifact.signature = sigText
+        this.oipSend(pubArtifact, (pubResult) => {
+            postPartyTxid(pubResult.response[0])
+        })
+      }
+    )
+  }
+
+  createSpatialUnit(locationName,
+     locationDescription,
+     locationYear,
+     files,
+     polygonCoords,
+     bbox,
+     postSpatiTxid) {
+
+    let ts = Math.round((new Date()).getTime() / 1000);
+    let dummyLocation = 'dummyipfsaddressforthisspatialunit'
+    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
+
+    let pubSpat = { oip042: 
+      { publish: {
+          artifact: {
+            floAddress: this.publisher,
+            timestamp: ts,
+            type: 'property',
+            subtype: 'spatialUnit',
+            info: {
+              title: locationName,
+              description: locationDescription,
+              year: locationYear
+            },
+            storage: {
+              network: 'IPFS',
+              location: dummyLocation,
+              files: []
+            },
+            details: {
+              ns: 'MLG',
+              spatialType: 'polygon',
+              geometry: {
+                type: 'geojson',
+                data: { polygonCoords }
+              },
+              bbox: bbox
+            },
+            signature: ''
+          }
+        }
+      }
+    }
+
+    this.oipSign({address:this.publisher,text:sigPreimage},
+            (sigText) => {
+              pubSpat.oip042.publish.artifact.signature = sigText
+              this.oipSend(pubSpat, (pubResult) => {
+                postSpatiTxid(pubResult.response[0])
+              })
+            }
+        )
+  }
+
+  createTenure(tenureName,
+     tenureDescription,
+     tenureYearStart,
+     files,
+     partyTxid,
+     spatialUnitTxid,
+     postTenureTxid) {
+    let ts = Math.round((new Date()).getTime() / 1000);
+    let ipfsDAG = 'dummyipfsaddressforthistenure'
+    let ipfsFiles = []
+
+    this.captureFile(this.state.propertyForm.documents, (ipfsLocation) => {
+      ipfsDAG = ipfsLocation
+      this.state.propertyForm.documents.forEach((f, index, array) => {
+        ipfsFiles.push({fName: f.name, fSize: f.size, cType: f.type})
+      })
+
+      let sigPreimage = ipfsDAG + '-' + this.publisher + '-' + ts.toString()
+      let pubTenure = { oip042: 
+        { publish: {
+            artifact: {
+              floAddress: this.publisher,
+              timestamp: ts,
+              type: 'property',
+              subtype: 'tenure',
+              info: {
+                title: tenureName,
+                description: tenureDescription,
+                year: tenureYearStart
+              },
+              storage: {
+                network: 'IPFS',
+                location: ipfsDAG,
+                files: ipfsFiles
+              },
+              details: {
+                ns: 'MLG',
+                party: partyTxid,
+                spatialUnit: spatialUnitTxid,
+                tenureType: 'FREEHOLD'
+              },
+              signature: ''
+            }
+          }
+        }
+      }
+  
+      this.oipSign({address:this.publisher,text:sigPreimage},
+          (sigText) => {
+            pubTenure.oip042.publish.artifact.signature = sigText
+            this.oipSend(pubTenure, (pubResult) => {
+              postTenureTxid(pubResult.response[0])
+            })
+          }
+      )
+    })
+  }
+
+  publishPropertyRecord(
+    partyName,
+    partyDescription,
+    partyYearStart,
+    locationName,
+    locationDescription,
+    locationYearStart,
+    locationFiles,
+    polygonCoords,
+    bbox,
+    tenureName,
+    tenureDescription,
+    tenureYearStart,
+    tenureFiles,
+    postArtifactTxids
+  ) {
+    let partyTxid = ''
+    let spatialTxid = ''
+    this.createParty(partyName, partyDescription, partyYearStart, (resultPartyTxid) => {
+      partyTxid = resultPartyTxid
+      this.createSpatialUnit(locationName, 
+                             locationDescription, 
+                             locationYearStart, 
+                             locationFiles, 
+                             polygonCoords, 
+                             bbox, 
+                             (resultSpatTxid) => {
+          spatialTxid = resultSpatTxid
+          this.createTenure(tenureName,
+                            tenureDescription,
+                            tenureYearStart,
+                            tenureFiles,
+                            partyTxid,
+                            spatialTxid,
+                            (resultTenureTxid) => {
+                              postArtifactTxids(partyTxid, spatialTxid, resultTenureTxid)
+                            }
+                        )
+        })
+    })
   }
 
   handlePropertyChange = (e) => {
@@ -205,7 +481,26 @@ export default class Home extends Component {
     e.preventDefault();
     let map = document.getElementById('map');
 
-    domtoimage.toPng(map)
+    const currentDate = new Date()
+    this.publishPropertyRecord(this.state.propertyForm.partyName,
+      this.state.propertyForm.partyName + " long description",
+      currentDate.getFullYear(),
+      this.state.propertyForm.spatialName,
+      this.state.propertyForm.spatialDescription,
+      currentDate.getFullYear(),
+      [],
+      this.state.polygonCoords,
+      [],
+      this.state.propertyForm.partyName + ' ' + this.state.propertyForm.spatialName,
+      this.state.propertyForm.partyName + ' ownership of ' + this.state.propertyForm.spatialName,
+      currentDate.getFullYear(),
+      this.state.propertyForm.documents,
+      (party, spatial, tenure) => {
+        console.log('Party: ' + party + ', Location: ' + spatial + ', Tenure: ' + tenure)
+      }
+     )
+
+     domtoimage.toPng(map)
       .then(dataUrl => {
         var img = new Image();
         img.src = dataUrl;
