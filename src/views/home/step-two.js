@@ -56,7 +56,7 @@ const StepTwo = props => {
           </div>
         ) : (
           <div className="form-group mb-5">
-            <textarea rows="12" className="form-control bg-white" disabled="true" placeholder="Upload Documents support this property belongs to you. (eg. JPG, PNG, PDF, TIFF, TXT, MPEG3, MPEG4)"></textarea>
+            <textarea rows="12" className="form-control bg-white" disabled="true" placeholder="Upload Documents supporting this property belongs to you. (eg. JPG, PNG, PDF, TIFF, TXT, MPEG3, MPEG4)"></textarea>
           </div>
         )}
         <div className="form-group m-auto text-center">

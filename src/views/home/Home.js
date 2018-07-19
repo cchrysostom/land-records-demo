@@ -35,7 +35,7 @@ export default class Home extends Component {
     this.initAutocomplete()
   }
 
-  captureFile (files) {
+  captureFile (files, captureFileCb) {
     let filesCount = files.length
     let loadendCount = filesCount
     let readers = []
@@ -44,13 +44,13 @@ export default class Home extends Component {
       let reader = new window.FileReader()
       reader.onloadend = () => { 
         readers.push(reader)
-        if (!--loadendCount) this.saveToIpfs(readers)
+        if (!--loadendCount) this.saveToIpfs(readers, captureFileCb)
       }
       reader.readAsArrayBuffer(file)
     }
   }
 
-  saveToIpfs (readers) {
+  saveToIpfs (readers, saveIpfsCb) {
     let ipfsId
     console.log(readers)
     let buffers = []
@@ -64,7 +64,7 @@ export default class Home extends Component {
         console.log(response)
         // Grab last hash for IPFS dag. Assuming it is the last response.
         ipfsId = response[response.length-1].hash
-        this.setState({storage_location: ipfsId}) 
+        saveIpfsCb(ipfsId)
       }).catch((err) => {
         console.error(err)
       })
@@ -215,45 +215,54 @@ export default class Home extends Component {
      spatialUnitTxid,
      postTenureTxid) {
     let ts = Math.round((new Date()).getTime() / 1000);
-    let dummyLocation = 'dummyipfsaddressforthistenure'
-    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
+    let ipfsDAG = 'dummyipfsaddressforthistenure'
+    let ipfsFiles = []
 
-    let pubTenure = { oip042: 
-      { publish: {
-          artifact: {
-            floAddress: this.publisher,
-            timestamp: ts,
-            type: 'property',
-            subtype: 'tenure',
-            info: {
-              title: tenureName,
-              description: tenureDescription,
-              year: tenureYearStart
-            },
-            storage: {
-              network: 'IPFS',
-              location: dummyLocation
-            },
-            details: {
-              ns: 'MLG',
-              party: partyTxid,
-              spatialUnit: spatialUnitTxid,
-              tenureType: 'FREEHOLD'
-            },
-            signature: ''
+    this.captureFile(this.state.propertyForm.documents, (ipfsLocation) => {
+      ipfsDAG = ipfsLocation
+      this.state.propertyForm.documents.forEach((f, index, array) => {
+        ipfsFiles.push({fName: f.name, fSize: f.size, cType: f.type})
+      })
+
+      let sigPreimage = ipfsDAG + '-' + this.publisher + '-' + ts.toString()
+      let pubTenure = { oip042: 
+        { publish: {
+            artifact: {
+              floAddress: this.publisher,
+              timestamp: ts,
+              type: 'property',
+              subtype: 'tenure',
+              info: {
+                title: tenureName,
+                description: tenureDescription,
+                year: tenureYearStart
+              },
+              storage: {
+                network: 'IPFS',
+                location: ipfsDAG,
+                files: ipfsFiles
+              },
+              details: {
+                ns: 'MLG',
+                party: partyTxid,
+                spatialUnit: spatialUnitTxid,
+                tenureType: 'FREEHOLD'
+              },
+              signature: ''
+            }
           }
         }
       }
-    }
-
-    this.oipSign({address:this.publisher,text:sigPreimage},
-        (sigText) => {
-          pubTenure.oip042.publish.artifact.signature = sigText
-          this.oipSend(pubTenure, (pubResult) => {
-            postTenureTxid(pubResult.response[0])
-          })
-        }
-    )
+  
+      this.oipSign({address:this.publisher,text:sigPreimage},
+          (sigText) => {
+            pubTenure.oip042.publish.artifact.signature = sigText
+            this.oipSend(pubTenure, (pubResult) => {
+              postTenureTxid(pubResult.response[0])
+            })
+          }
+      )
+    })
   }
 
   publishPropertyRecord(
