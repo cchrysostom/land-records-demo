@@ -71,7 +71,6 @@ export default class Home extends Component {
         zoom: 15,
         center: { lat: position.coords.latitude, lng: position.coords.longitude },
         mapTypeId: 'roadmap'
-        // mapTypeId: 'hybrid'
       })
       window.tileListener = window.google.maps.event.addListener(map, 'tilesloaded', this.setCenterAndCreatePolygon.bind(this, map));
     }, 500)
