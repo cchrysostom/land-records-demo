@@ -3,12 +3,14 @@ import domtoimage from 'dom-to-image';
 import ipfsAPI from 'ipfs-api';
 import StepOne from './step-one';
 import StepTwo from './step-two';
+import StepThree from './step-three';
 
 export default class Home extends Component {
   constructor(props) {
     super(props)
     this.state = {
       step: 1,
+      loading: false,
       map: null,
       polygon: null,
       polygonCoords: [],
@@ -25,17 +27,18 @@ export default class Home extends Component {
         documents: []
       },
       toastActive: false,
-      toastMessage: ''
-      }
-      this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
-      this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
+      toastMessage: '',
+      results: {}
+    }
+    this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
+    this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
   }
 
   componentDidMount() {
     this.initAutocomplete()
   }
 
-  captureFile (files, captureFileCb) {
+  captureFile(files, captureFileCb) {
     let filesCount = files.length
     let loadendCount = filesCount
     let fileAdds = []
@@ -58,10 +61,11 @@ export default class Home extends Component {
       .then((response) => {
         console.log(response)
         // Grab last hash for IPFS dag. Assuming it is the last response.
-        ipfsId = response[response.length-1].hash
+        ipfsId = response[response.length - 1].hash
         saveIpfsCb(ipfsId)
       }).catch((err) => {
         console.error(err)
+        this.setState({ loading: false })
       })
   }
 
@@ -112,16 +116,17 @@ export default class Home extends Component {
       headers: sendHeaders,
       body: 'json:' + JSON.stringify(sendRequest)
     }
-    
+
     fetch('http://35.230.92.250:41289/alexandria/v1/send', postInit)
       .then((response) => {
         return response.json()
       })
       .then((json) => {
         console.log('/v1/send', JSON.stringify(json))
+        // save this transaction pointer to state in array of transactions
         sendResult(json)
       })
-    
+
   }
 
   createParty(partyName, partyDescription, partyYear, postPartyTxid) {
@@ -129,8 +134,10 @@ export default class Home extends Component {
     let dummyLocation = 'dummylocationforparty'
     let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
 
-    let pubArtifact = { oip042: 
-      { publish: {
+    let pubArtifact = {
+      oip042:
+      {
+        publish: {
           artifact: {
             floAddress: this.publisher,
             timestamp: ts,
@@ -155,30 +162,32 @@ export default class Home extends Component {
       }
     }
 
-    this.oipSign({address:this.publisher,text:sigPreimage},
+    this.oipSign({ address: this.publisher, text: sigPreimage },
       (sigText) => {
         pubArtifact.oip042.publish.artifact.signature = sigText
         this.oipSend(pubArtifact, (pubResult) => {
-            postPartyTxid(pubResult.response[0])
+          postPartyTxid(pubResult.response[0])
         })
       }
     )
   }
 
   createSpatialUnit(locationName,
-     locationDescription,
-     locationYear,
-     files,
-     polygonCoords,
-     bbox,
-     postSpatiTxid) {
+    locationDescription,
+    locationYear,
+    files,
+    polygonCoords,
+    bbox,
+    postSpatiTxid) {
 
     let ts = Math.round((new Date()).getTime() / 1000);
     let dummyLocation = 'dummyipfsaddressforthisspatialunit'
     let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
 
-    let pubSpat = { oip042: 
-      { publish: {
+    let pubSpat = {
+      oip042:
+      {
+        publish: {
           artifact: {
             floAddress: this.publisher,
             timestamp: ts,
@@ -209,23 +218,23 @@ export default class Home extends Component {
       }
     }
 
-    this.oipSign({address:this.publisher,text:sigPreimage},
-            (sigText) => {
-              pubSpat.oip042.publish.artifact.signature = sigText
-              this.oipSend(pubSpat, (pubResult) => {
-                postSpatiTxid(pubResult.response[0])
-              })
-            }
-        )
+    this.oipSign({ address: this.publisher, text: sigPreimage },
+      (sigText) => {
+        pubSpat.oip042.publish.artifact.signature = sigText
+        this.oipSend(pubSpat, (pubResult) => {
+          postSpatiTxid(pubResult.response[0])
+        })
+      }
+    )
   }
 
   createTenure(tenureName,
-     tenureDescription,
-     tenureYearStart,
-     files,
-     partyTxid,
-     spatialUnitTxid,
-     postTenureTxid) {
+    tenureDescription,
+    tenureYearStart,
+    files,
+    partyTxid,
+    spatialUnitTxid,
+    postTenureTxid) {
     let ts = Math.round((new Date()).getTime() / 1000);
     let ipfsDAG = 'dummyipfsaddressforthistenure'
     let ipfsFiles = []
@@ -233,12 +242,14 @@ export default class Home extends Component {
     this.captureFile(this.state.propertyForm.documents, (ipfsLocation) => {
       ipfsDAG = ipfsLocation
       this.state.propertyForm.documents.forEach((f, index, array) => {
-        ipfsFiles.push({fName: f.name, fSize: f.size, cType: f.type})
+        ipfsFiles.push({ fName: f.name, fSize: f.size, cType: f.type })
       })
 
       let sigPreimage = ipfsDAG + '-' + this.publisher + '-' + ts.toString()
-      let pubTenure = { oip042: 
-        { publish: {
+      let pubTenure = {
+        oip042:
+        {
+          publish: {
             artifact: {
               floAddress: this.publisher,
               timestamp: ts,
@@ -265,14 +276,14 @@ export default class Home extends Component {
           }
         }
       }
-  
-      this.oipSign({address:this.publisher,text:sigPreimage},
-          (sigText) => {
-            pubTenure.oip042.publish.artifact.signature = sigText
-            this.oipSend(pubTenure, (pubResult) => {
-              postTenureTxid(pubResult.response[0])
-            })
-          }
+
+      this.oipSign({ address: this.publisher, text: sigPreimage },
+        (sigText) => {
+          pubTenure.oip042.publish.artifact.signature = sigText
+          this.oipSend(pubTenure, (pubResult) => {
+            postTenureTxid(pubResult.response[0])
+          })
+        }
       )
     })
   }
@@ -297,24 +308,24 @@ export default class Home extends Component {
     let spatialTxid = ''
     this.createParty(partyName, partyDescription, partyYearStart, (resultPartyTxid) => {
       partyTxid = resultPartyTxid
-      this.createSpatialUnit(locationName, 
-                             locationDescription, 
-                             locationYearStart, 
-                             locationFiles, 
-                             polygonCoords, 
-                             bbox, 
-                             (resultSpatTxid) => {
+      this.createSpatialUnit(locationName,
+        locationDescription,
+        locationYearStart,
+        locationFiles,
+        polygonCoords,
+        bbox,
+        (resultSpatTxid) => {
           spatialTxid = resultSpatTxid
           this.createTenure(tenureName,
-                            tenureDescription,
-                            tenureYearStart,
-                            tenureFiles,
-                            partyTxid,
-                            spatialTxid,
-                            (resultTenureTxid) => {
-                              postArtifactTxids(partyTxid, spatialTxid, resultTenureTxid)
-                            }
-                        )
+            tenureDescription,
+            tenureYearStart,
+            tenureFiles,
+            partyTxid,
+            spatialTxid,
+            (resultTenureTxid) => {
+              postArtifactTxids(partyTxid, spatialTxid, resultTenureTxid)
+            }
+          )
         })
     })
   }
@@ -323,6 +334,17 @@ export default class Home extends Component {
     let propertyForm = this.state.propertyForm
     propertyForm[e.target.name] = e.target.value
     this.setState({ propertyForm })
+  }
+
+  handleDocumentSelect = (index, e) => {
+    let propertyForm = this.state.propertyForm
+    propertyForm.documents.map((docu, i) => {
+      if(index === i) {
+        docu.option.value = e.target.value
+      }
+      return docu
+    })
+    this.setState({propertyForm})
   }
 
   getCurrentLocation = () => {
@@ -336,6 +358,7 @@ export default class Home extends Component {
       }, this.initMap(success))
     }, error => {
       this.setState({
+        loading: false,
         toastActive: true,
         toastMessage: 'Could not get your location.'
       }, () => {
@@ -359,7 +382,6 @@ export default class Home extends Component {
         zoom: 15,
         center: { lat: position.coords.latitude, lng: position.coords.longitude },
         mapTypeId: 'roadmap'
-        // mapTypeId: 'hybrid'
       })
       window.tileListener = window.google.maps.event.addListener(map, 'tilesloaded', this.setCenterAndCreatePolygon.bind(this, map));
     }, 500)
@@ -474,7 +496,13 @@ export default class Home extends Component {
   readFilesIntoObject = (e) => {
     let propertyForm = this.state.propertyForm
     Object.keys(e.target.files).forEach(file => {
-      let doc = e.target.files[file];
+      let doc = {
+        file: e.target.files[file],
+        option: {
+          key: 0,
+          value: ''
+        }
+      }
       // if(doc.type.split('/')[0] === 'image') {
       //   var reader = new FileReader();
       //   reader.onload = (e) => {
@@ -491,6 +519,7 @@ export default class Home extends Component {
 
   publishProperty = (e) => {
     e.preventDefault();
+    this.setState({ loading: true })
     let map = document.getElementById('map');
 
     const currentDate = new Date()
@@ -508,15 +537,25 @@ export default class Home extends Component {
       currentDate.getFullYear(),
       this.state.propertyForm.documents,
       (party, spatial, tenure) => {
+        this.setState({
+          results: {
+            party: party,
+            spatial: spatial,
+            tenure: tenure
+          },
+          step: 3,
+          loading: false
+        })
         console.log('Party: ' + party + ', Location: ' + spatial + ', Tenure: ' + tenure)
       }
-     )
+    )
 
-     domtoimage.toPng(map)
+    domtoimage.toPng(map)
       .then(dataUrl => {
-        var img = new Image();
+        let img = new Image();
         img.src = dataUrl;
-        document.body.appendChild(img);
+        
+        // document.body.appendChild(img);
       })
       .catch(error => {
         console.error('oops, something went wrong!', error);
@@ -524,6 +563,7 @@ export default class Home extends Component {
   }
 
   render() {
+    console.log(this.state)
     return (
       <div>
         <div className={`toast ${this.state.toastActive ? 'show' : 'hide'}`}>
@@ -541,16 +581,26 @@ export default class Home extends Component {
                 submitStepOne={this.submitStepOne}
                 propertyForm={this.state.propertyForm}
                 handlePropertyChange={this.handlePropertyChange}
+                loading={this.state.loading}
+                />
+              ) : this.state.step === 2 ? (
+                <StepTwo
+                key="step-two"
+                handlePropertyChange={this.handlePropertyChange}
+                handleDocumentSelect={this.handleDocumentSelect}
+                readFilesIntoObject={this.readFilesIntoObject}
+                propertyForm={this.state.propertyForm}
+                publishProperty={this.publishProperty}
+                loading={this.state.loading}
               />
             ) : (
-                <StepTwo
-                  key="step-two"
-                  handlePropertyChange={this.handlePropertyChange}
-                  readFilesIntoObject={this.readFilesIntoObject}
-                  propertyForm={this.state.propertyForm}
-                  publishProperty={this.publishProperty}
-                />
-              )}
+                  <StepThree
+                    propertyForm={this.state.propertyForm}
+                    currentLocation={this.state.currentLocation}
+                    polygonCoords={this.state.polygonCoords}
+                    results={this.state.results}
+                  />
+                )}
           </div>
         </div>
       </div>

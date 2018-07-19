@@ -4,22 +4,21 @@ import remove from '../../images/remove.svg';
 import docSvg from '../../images/doc-svg.svg';
 
 const StepTwo = props => {
-  console.log(props)
-  let documents = props.propertyForm.documents.map((file, i) => {
+  let documents = props.propertyForm.documents.map((docu, i) => {
     return (
-      <li className="list-group-item d-flex" key={file.name + i}>
-        {file.thumbnail ? <img src={file.thumbnail} alt=""/> : (
+      <li className="list-group-item d-flex" key={docu.file.name + i}>
+        {docu.file.thumbnail ? <img src={docu.file.thumbnail} alt=""/> : (
           <div className="document">
             <img src={docSvg} alt="document"/>
           </div>
         )}
         <div className="list-meta">
-          <div className="title">{file.name}</div>
-          <select name="type" className="form-control mt-2">
+          <div className="title">{docu.file.name}</div>
+          <select name="type" className="form-control mt-2" onChange={props.handleDocumentSelect.bind(this, i)}>
             <option value="">Please select document type</option>
-            <option value="ownership">This document proves ownership.</option>
-            <option value="location">This document proves location.</option>
-            <option value="other">Other (uncategorized).</option>
+            <option value="This document proves ownership.">This document proves ownership.</option>
+            <option value="This document proves location.">This document proves location.</option>
+            <option value="Other">Other (uncategorized).</option>
           </select>
         </div>
         <span className="actions ml-auto">
@@ -40,7 +39,7 @@ const StepTwo = props => {
           <input name="spatialName" value={props.propertyForm.spatialName} type="text" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange} />
         </div>
         <div className="form-group">
-          <label>Property Description (Optional)</label>
+          <label>Property Description (Required)</label>
           <textarea name="spatialDescription" value={props.propertyForm.spatialDescription} rows="5" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange}></textarea>
         </div>
         <div className="form-group">
