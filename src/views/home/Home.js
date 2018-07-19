@@ -65,6 +65,23 @@ export default class Home extends Component {
       })
   }
 
+  ipfsGetFile(ipfsHash, fileDownloaded) {
+      this.ipfsApi.files.get((err, files) => {
+        if (err) {
+          console.log(err)
+          return
+        }
+
+        files.forEach((file) => {
+          console.log('ipfsGetFile', file.path)
+          console.log('ipfsGetFile', file.content)
+
+          const downloadedFile = new File(Buffer.from(file.content), file.path)
+          fileDownloaded(downloadedFile)
+        })
+      })
+  }
+
   oipSign(signRequest, signResult) {
     console.log(signRequest)
     let signHeaders = new Headers()
