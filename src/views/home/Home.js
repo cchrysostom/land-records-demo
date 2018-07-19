@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import domtoimage from 'dom-to-image';
 import ipfsAPI from 'ipfs-api';
-import remove from '../images/remove.svg';
+import StepOne from './step-one';
+import StepTwo from './step-two';
 
 export default class Home extends Component {
   constructor(props) {
@@ -18,15 +19,16 @@ export default class Home extends Component {
       autocomplete: null,
       manualAddress: '',
       propertyForm: {
-        name: '',
+        partyName: '',
+        spatialName: '',
         description: '',
         documents: []
       },
       toastActive: false,
       toastMessage: ''
-    }
-    this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
-    this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
+      }
+      this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
+      this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
   }
 
   componentDidMount() {
@@ -348,7 +350,7 @@ export default class Home extends Component {
       autocomplete = new window.google.maps.places.Autocomplete(document.getElementById('autocomplete'), { types: ['geocode'] });
       autocomplete.addListener('place_changed', this.fillInAddress)
       this.setState({ autocomplete })
-    }, 0)
+    }, 500)
   }
 
   fillInAddress = (e) => {
@@ -469,29 +471,27 @@ export default class Home extends Component {
   publishProperty = (e) => {
     e.preventDefault();
     let map = document.getElementById('map');
-    const partyName = "Jehannete the Dragonslayer"
-    const partyDescription = "Slayer of dragons from The Misty Abyss"
 
-    this.publishPropertyRecord(partyName,
-                               partyDescription,
-                               2018,
-                               this.state.propertyForm.name,
-                               this.state.propertyForm.description,
-                               2018,
-                               [],
-                               this.state.polygonCoords,
-                               [],
-                               partyName + ' ' + this.state.propertyForm.name,
-                               partyName + ' ownership of ' + this.state.propertyForm.name,
-                               2018,
-                               this.state.propertyForm.documents,
-                               (party, spatial, tenure) => {
-                                 console.log('Party: ' + party + ', Location: ' + spatial + ', Tenure: ' + tenure)
-                               }
-                              )
+    const currentDate = new Date()
+    this.publishPropertyRecord(this.state.propertyForm.partyName,
+      this.state.propertyForm.partyName + " long description",
+      currentDate.getFullYear(),
+      this.state.propertyForm.spatialName,
+      this.state.propertyForm.spatialDescription,
+      currentDate.getFullYear(),
+      [],
+      this.state.polygonCoords,
+      [],
+      this.state.propertyForm.partyName + ' ' + this.state.propertyForm.spatialName,
+      this.state.propertyForm.partyName + ' ownership of ' + this.state.propertyForm.spatialName,
+      currentDate.getFullYear(),
+      this.state.propertyForm.documents,
+      (party, spatial, tenure) => {
+        console.log('Party: ' + party + ', Location: ' + spatial + ', Tenure: ' + tenure)
+      }
+     )
 
-/*                              
-    domtoimage.toPng(map)
+     domtoimage.toPng(map)
       .then(dataUrl => {
         var img = new Image();
         img.src = dataUrl;
@@ -500,11 +500,9 @@ export default class Home extends Component {
       .catch(error => {
         console.error('oops, something went wrong!', error);
       });
-*/
   }
 
   render() {
-    console.log(this.state)
     return (
       <div>
         <div className={`toast ${this.state.toastActive ? 'show' : 'hide'}`}>
@@ -520,6 +518,8 @@ export default class Home extends Component {
                 getCurrentLocation={this.getCurrentLocation}
                 fillInAddress={this.fillInAddress}
                 submitStepOne={this.submitStepOne}
+                propertyForm={this.state.propertyForm}
+                handlePropertyChange={this.handlePropertyChange}
               />
             ) : (
                 <StepTwo
@@ -535,95 +535,4 @@ export default class Home extends Component {
       </div>
     )
   }
-}
-
-
-const StepOne = props => {
-  const btnStyles = {
-    minWidth: '200px'
-  }
-  return (
-    <div className="text-center mt-5">
-      <h1 className="mb-5">Welcome!<br />Please input your location to start.</h1>
-      <button type="button" className="btn btn-outline-primary btn-sm mb-5" style={btnStyles} onClick={props.getCurrentLocation}>Use My Current Location</button>
-      <div className="hr-line mb-5">
-        <span>or</span>
-      </div>
-      <div className="m-auto" style={{ maxWidth: '480px' }}>
-        <form onSubmit={props.submitStepOne}>
-          <div className="form-group">
-            <input
-              type="text"
-              id="autocomplete"
-              name="manualAddress"
-              value={props.manualAddress}
-              className="form-control mb-3"
-              placeholder="Enter Address"
-              onChange={props.fillInAddress}
-            />
-            <button type="submit" className="btn btn-primary btn-sm" style={{ minWidth: '145px' }}>Search</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-const StepTwo = props => {
-  console.log(props)
-  let documents = props.propertyForm.documents.map((file, i) => {
-    return (
-      <li className="list-group-item d-flex" key={file.name + i}>
-        {/*file.thumbnail ? <img src={file.thumbnail} alt=""/> : null*/}
-        <div className="list-meta">
-          <div className="title">{file.name}</div>
-          <select name="type" className="form-control mt-2">
-            <option value="">Please select document type</option>
-            <option value="ownership">This document proves ownership.</option>
-            <option value="location">This document proves location.</option>
-            <option value="other">Other (uncategorized).</option>
-          </select>
-        </div>
-        <span className="actions ml-auto">
-          <button className="action-button"><img src={remove} alt="remove document"/></button>
-        </span>
-      </li>
-    )
-  })
-
-  return (
-    <div className="mt-5">
-      <div className="map-container mb-5">
-        <div id="map"></div>
-      </div>
-      <div style={{ maxWidth: '480px' }} className="m-auto">
-        <div className="form-group">
-          <label>Property Name (Required)</label>
-          <input name="name" value={props.propertyForm.name} type="text" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange} />
-        </div>
-        <div className="form-group">
-          <label>Property Description (Optional)</label>
-          <textarea name="description" value={props.propertyForm.description} rows="5" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange}></textarea>
-        </div>
-        <div className="form-group">
-          <label className="d-block">Add Supporting Documents (Optional)</label>
-          <input type="file" name="documents" id="documents" placeholder="Choose Files" className="inputfile btn btn-sm btn-outline-primary d-block" style={{ minWidth: '200px' }} onChange={props.readFilesIntoObject} multiple />
-          <label htmlFor="documents" className="d-block d-md-inline-block">Choose Files</label>
-        </div>
-        {props.propertyForm.documents.length > 0 ? (
-          <div className="form-group form-files">
-            <ul className="list-group">
-              {documents}
-            </ul>
-          </div>
-        ) : null}
-        <div className="form-group mb-5">
-          <textarea rows="12" className="form-control" placeholder="Upload Documents support this property belongs to you. (eg. JPG, PNG, PDF, TIFF, TXT, MPEG3, MPEG4)"></textarea>
-        </div>
-        <div className="form-group m-auto text-center">
-          <button type="submit" className="btn btn-primary btn-sm" style={{ minWidth: '180px' }} onClick={props.publishProperty}>Publish Property</button>
-        </div>
-      </div>
-    </div>
-  )
 }
