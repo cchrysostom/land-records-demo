@@ -41,15 +41,6 @@ export default class Home extends Component {
   captureFile(files, captureFileCb) {
     let filesCount = files.length
     let loadendCount = filesCount
-<<<<<<< HEAD
-    let readers = []
-    for (let i = 0; i < filesCount; i++) {
-      let file = files[i].file
-      let reader = new window.FileReader()
-      reader.onloadend = () => {
-        readers.push(reader)
-        if (!--loadendCount) this.saveToIpfs(readers, captureFileCb)
-=======
     let fileAdds = []
     for (let i=0; i < filesCount; i++) {
       let file = files[i]
@@ -57,17 +48,12 @@ export default class Home extends Component {
       reader.onloadend = () => { 
         fileAdds.push({path: file.name, content: Buffer.from(reader.result)})
         if (!--loadendCount) this.saveToIpfs(fileAdds, captureFileCb)
->>>>>>> 4b5de71ebb4ea670b9d8336b4b2bbb77ccd5fc10
       }
       reader.readAsArrayBuffer(file)
     }
   }
 
-<<<<<<< HEAD
-  saveToIpfs(readers, saveIpfsCb) {
-=======
   saveToIpfs (fileAdds, saveIpfsCb) {
->>>>>>> 4b5de71ebb4ea670b9d8336b4b2bbb77ccd5fc10
     let ipfsId
     console.log('saveToIpfs', fileAdds)
 
