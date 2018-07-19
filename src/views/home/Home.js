@@ -38,28 +38,23 @@ export default class Home extends Component {
   captureFile (files, captureFileCb) {
     let filesCount = files.length
     let loadendCount = filesCount
-    let readers = []
+    let fileAdds = []
     for (let i=0; i < filesCount; i++) {
       let file = files[i]
       let reader = new window.FileReader()
       reader.onloadend = () => { 
-        readers.push(reader)
-        if (!--loadendCount) this.saveToIpfs(readers, captureFileCb)
+        fileAdds.push({path: file.name, content: Buffer.from(reader.result)})
+        if (!--loadendCount) this.saveToIpfs(fileAdds, captureFileCb)
       }
       reader.readAsArrayBuffer(file)
     }
   }
 
-  saveToIpfs (readers, saveIpfsCb) {
+  saveToIpfs (fileAdds, saveIpfsCb) {
     let ipfsId
-    console.log(readers)
-    let buffers = []
-    readers.forEach((r) => {
-      let buffer = Buffer.from(r.result)
-      buffers.push(buffer)
-    })
+    console.log('saveToIpfs', fileAdds)
 
-    this.ipfsApi.add(buffers, { progress: (prog) => console.log(`received: ${prog}`), wrapWithDirectory: true })
+    this.ipfsApi.add(fileAdds, { progress: (prog) => console.log(`received: ${prog}`), wrapWithDirectory: true })
       .then((response) => {
         console.log(response)
         // Grab last hash for IPFS dag. Assuming it is the last response.
@@ -67,6 +62,23 @@ export default class Home extends Component {
         saveIpfsCb(ipfsId)
       }).catch((err) => {
         console.error(err)
+      })
+  }
+
+  ipfsGetFile(ipfsHash, fileDownloaded) {
+      this.ipfsApi.files.get((err, files) => {
+        if (err) {
+          console.log(err)
+          return
+        }
+
+        files.forEach((file) => {
+          console.log('ipfsGetFile', file.path)
+          console.log('ipfsGetFile', file.content)
+
+          const downloadedFile = new File(Buffer.from(file.content), file.path)
+          fileDownloaded(downloadedFile)
+        })
       })
   }
 
