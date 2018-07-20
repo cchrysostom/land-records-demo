@@ -5,12 +5,15 @@ export const TransactionCard = props => {
   console.log(props)
   let tx = props.transaction;
   let icon = '';
+  let floData = JSON.parse(tx.floData.slice(5, tx.floData.length))
+  console.log(floData)
+  // let ipfsLink = floData.
   return (
     <div className="col-sm-12 col-md-4">
       <div className={`transaction-card-title pl-3 mb-2 ${props.color}`}><i className="transaction-card-icon"></i> {props.type} Information</div>
       <div className={`card ${props.color}`}>
         <div className="card-body p-0">
-          <h5 className="card-title p-2"><strong>Transaction Id:</strong><br/>{tx.txId}</h5>
+          <h5 className="card-title p-2"><strong>Transaction Id:</strong><br />{tx.txId}</h5>
           <ul className="list-group list-group-flush">
             <li className="list-group-item">
               <div className="d-flex">
@@ -24,7 +27,7 @@ export const TransactionCard = props => {
             </li>
             <li className="list-group-item">
               <div><strong>Included in Block:</strong></div>
-              {tx.blockhash}
+              {tx.blockhash !== undefined ? tx.blockhash : 'Pending...'}
             </li>
             <li className="list-group-item mb-5">
               <div className="d-flex">
@@ -43,8 +46,10 @@ export const TransactionCard = props => {
           </ul>
         </div>
       </div>
-      <a className="d-block pl-3 mb-2 mt-2" style={{fontSize: '14px', color: '#9CA0A1'}}>View Full Transaction Details <span>›</span></a>
-      <a className="d-block pl-3 mb-3" style={{fontSize: '14px', color: '#9CA0A1'}}>View All Supporting Documents <span>›</span></a>
+      <a href={`https://testnet.flocha.in/tx/${tx.txId}`} target="_blank" className="d-block pl-3 mb-2 mt-2" style={{ fontSize: '14px', color: '#9CA0A1' }}>View Full Transaction Details <span>›</span></a>
+      {floData.oip042.publish.artifact.storage.location !== '' && !floData.oip042.publish.artifact.storage.location.includes('dummy') ? (
+        <a href={`https://ipfs.io/ipfs/${floData.oip042.publish.artifact.storage.location}`} target="_blank" className="d-block pl-3 mb-3" style={{ fontSize: '14px', color: '#9CA0A1' }}>View All Supporting Documents <span>›</span></a>
+      ) : null}
     </div>
   )
 }
