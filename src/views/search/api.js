@@ -9,15 +9,9 @@ export const getTransaction = (txid, success, failure) => {
       return response.json()
     })
     .then((json) => {
-      let tx = {
-        txId: json.txid,
-        size: json.size,
-        fee: json.fees,
-        block: json.blockhash,
-        received: json.time,
-        blocktime: json.blocktime,
-        locktime: json.locktime 
-      }
+      let tx = {...json}
+      tx.txId = tx.txid;
+      tx.received = tx.time;
       success(tx)
     })
     .catch((err) => {

@@ -3,6 +3,7 @@ import { Route, Redirect, Switch } from "react-router-dom";
 
 import Home from "./views/home/Home";
 import Search from "./views/search/Search";
+import TransactionDetails from './views/search/TransactionDetails';
 
 const Routes = () => (
   <Switch>

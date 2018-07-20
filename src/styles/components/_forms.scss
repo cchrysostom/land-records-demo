@@ -20,7 +20,7 @@ input, .form-control{
   font-weight: 500;
   font-style: normal;
   font-stretch: normal;
-  line-height: normal;
+  line-height: 1.4;
   letter-spacing: normal;
   text-align: center;
   &.inputfile {
@@ -98,4 +98,33 @@ select, select.form-control, select.form-control:not([size]):not([multiple]) {
   font-size: 12px;
   height: 28px;
   line-height: 1;
+}
+
+
+
+.transaction-card-title, .card, .card * {
+  font-size: 14px !important;
+}
+.transaction-card-title {
+  &.orange {
+    color: #FC9B1B;
+  }
+  &.purple {
+    color: #BC5AFF;
+  }
+  &.green {
+    color: #91B71B;
+  }
+}
+.card {
+  border-width: 2px;
+  &.orange {
+    border-color: #FC9B1B;
+  }
+  &.purple {
+    border-color: #BC5AFF;
+  }
+  &.green {
+    border-color: #91B71B;
+  }
 }

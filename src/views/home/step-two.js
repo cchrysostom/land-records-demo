@@ -59,7 +59,7 @@ const StepTwo = props => {
           </div>
         )}
         <div className="form-group m-auto text-center">
-          <button type="submit" className="btn btn-primary btn-sm" style={{ minWidth: '180px' }} onClick={props.publishProperty}>Publish Property</button>
+          <button type="submit" className="btn btn-primary btn-sm" style={{ minWidth: '180px' }} onClick={props.publishProperty}>{props.loading === true ? <i className="fa fa-spinner fa-spin fa-fw"></i> : 'Publish Property'}</button>
         </div>
       </div>
     </div>
