@@ -44,13 +44,12 @@ export default class Home extends Component {
 
   captureFile(files, captureFileCb) {
     console.log('captureFile', files)
-    if (files.length == 0) captureFileCb("thisisadummyipfsdirectory"
-    )
+    if (files.length == 0) captureFileCb("thisisadummyipfsdirectory")
     let filesCount = files.length
     let loadendCount = filesCount
     let fileAdds = []
     for (let i = 0; i < filesCount; i++) {
-      let file = files[i].file
+      let file = files[i]
       let reader = new window.FileReader()
       reader.onloadend = () => {
         fileAdds.push({ path: file.name, content: Buffer.from(reader.result) })
@@ -544,9 +543,9 @@ export default class Home extends Component {
     console.log('publishProperty', this.state.propertyForm.documents)
     this.state.propertyForm.documents.forEach((item) => {
       if (item.option.value == "This document proves location.") {
-        spatialDocs.push(item)
+        spatialDocs.push(item.file)
       } else {
-        tenureDocs.push(item)
+        tenureDocs.push(item.file)
       }
     })
     this.publishPropertyRecord(this.state.propertyForm.partyName,
