@@ -6,13 +6,13 @@ const TransactionDetails = props => {
     <div>
       <div className="row mt-4 mb-3">
         <div className="col-sm-12">
-          <h1>Transaction Information for "{/* title */}"</h1>
+          <h1>Transaction Information</h1>
         </div>
       </div>
       <div className="row">
-        <TransactionCard color="purple"/>
-        <TransactionCard color="green"/>
-        <TransactionCard color="orange"/>
+        <TransactionCard color="purple" type="Tenure" transaction={props.transactions.tenure}/>
+        <TransactionCard color="green" type="Party" transaction={props.transactions.party}/>
+        <TransactionCard color="orange" type="Location" transaction={props.transactions.spatial}/>
       </div>
     </div>
   )

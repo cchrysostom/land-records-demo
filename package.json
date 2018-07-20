@@ -12,6 +12,7 @@
     "clipboard-js": "^0.3.6",
     "dom-to-image": "^2.6.0",
     "ipfs-api": "22.2.3",
+    "moment": "^2.22.2",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-router": "^4.3.1",
