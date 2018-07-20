@@ -6,8 +6,7 @@ export const TransactionCard = props => {
   let tx = props.transaction;
   let icon = '';
   let floData = JSON.parse(tx.floData.slice(5, tx.floData.length))
-  console.log(floData)
-  // let ipfsLink = floData.
+  let location = floData.oip042.publish.artifact.storage.location
   return (
     <div className="col-sm-12 col-md-4">
       <div className={`transaction-card-title pl-3 mb-2 ${props.color}`}><i className="transaction-card-icon"></i> {props.type} Information</div>
@@ -47,8 +46,8 @@ export const TransactionCard = props => {
         </div>
       </div>
       <a href={`https://testnet.flocha.in/tx/${tx.txId}`} target="_blank" className="d-block pl-3 mb-2 mt-2" style={{ fontSize: '14px', color: '#9CA0A1' }}>View Full Transaction Details <span>›</span></a>
-      {floData.oip042.publish.artifact.storage.location !== '' && !floData.oip042.publish.artifact.storage.location.includes('dummy') ? (
-        <a href={`https://ipfs.io/ipfs/${floData.oip042.publish.artifact.storage.location}`} target="_blank" className="d-block pl-3 mb-3" style={{ fontSize: '14px', color: '#9CA0A1' }}>View All Supporting Documents <span>›</span></a>
+      {location !== '' && !location.includes('dummy') ? (
+        <a href={`https://ipfs.io/ipfs/${location}`} target="_blank" className="d-block pl-3 mb-3" style={{ fontSize: '14px', color: '#9CA0A1' }}>View All Supporting Documents <span>›</span></a>
       ) : null}
     </div>
   )
