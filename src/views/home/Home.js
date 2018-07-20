@@ -5,7 +5,7 @@ import StepOne from './step-one';
 import StepTwo from './step-two';
 import StepThree from './step-three';
 
-export default class Home extends Component {
+export default class Home extends Component {  
   constructor(props) {
     super(props)
     this.state = {
@@ -32,6 +32,8 @@ export default class Home extends Component {
     }
     this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
     this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
+    this.SIGN_URL = 'http://35.230.92.250:41289/alexandria/v1/sign'
+    this.SEND_URL = 'http://35.230.92.250:41289/alexandria/v1/send'
   }
 
   componentDidMount() {
@@ -39,6 +41,9 @@ export default class Home extends Component {
   }
 
   captureFile(files, captureFileCb) {
+    console.log('captureFile', files)
+    if (files.length == 0) captureFileCb("thisisadummyipfsdirectory"
+  )
     let filesCount = files.length
     let loadendCount = filesCount
     let fileAdds = []
@@ -97,7 +102,7 @@ export default class Home extends Component {
       body: JSON.stringify(signRequest)
     }
 
-    fetch('http://35.230.92.250:41289/alexandria/v1/sign', postInit)
+    fetch(this.SIGN_URL, postInit)
       .then((response) => {
         return response.json()
       })
@@ -117,7 +122,7 @@ export default class Home extends Component {
       body: 'json:' + JSON.stringify(sendRequest)
     }
 
-    fetch('http://35.230.92.250:41289/alexandria/v1/send', postInit)
+    fetch(this.SEND_URL, postInit)
       .then((response) => {
         return response.json()
       })
@@ -181,51 +186,60 @@ export default class Home extends Component {
     postSpatiTxid) {
 
     let ts = Math.round((new Date()).getTime() / 1000);
-    let dummyLocation = 'dummyipfsaddressforthisspatialunit'
-    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
+    let ipfsDAG = 'dummyipfsaddressforthisspatialunit'
+    let ipfsFiles = []
+    console.log('createSpatialUnit', files)
 
-    let pubSpat = {
-      oip042:
-      {
-        publish: {
-          artifact: {
-            floAddress: this.publisher,
-            timestamp: ts,
-            type: 'property',
-            subtype: 'spatialUnit',
-            info: {
-              title: locationName,
-              description: locationDescription,
-              year: locationYear
-            },
-            storage: {
-              network: 'IPFS',
-              location: dummyLocation,
-              files: []
-            },
-            details: {
-              ns: 'MLG',
-              spatialType: 'polygon',
-              geometry: {
-                type: 'geojson',
-                data: { polygonCoords }
+    this.captureFile(files, (ipfsLocation) => {
+      ipfsDAG = ipfsLocation
+      files.forEach((f, index, array) => {
+        ipfsFiles.push({ fName: f.name, fSize: f.size, cType: f.type })
+      })
+      let sigPreimage = ipfsDAG + '-' + this.publisher + '-' + ts.toString()
+
+      let pubSpat = {
+        oip042:
+        {
+          publish: {
+            artifact: {
+              floAddress: this.publisher,
+              timestamp: ts,
+              type: 'property',
+              subtype: 'spatialUnit',
+              info: {
+                title: locationName,
+                description: locationDescription,
+                year: locationYear
               },
-              bbox: bbox
-            },
-            signature: ''
+              storage: {
+                network: 'IPFS',
+                location: ipfsDAG,
+                files: ipfsFiles
+              },
+              details: {
+                ns: 'MLG',
+                spatialType: 'polygon',
+                geometry: {
+                  type: 'geojson',
+                  data: { polygonCoords }
+                },
+                bbox: bbox
+              },
+              signature: ''
+            }
           }
         }
       }
-    }
-
-    this.oipSign({ address: this.publisher, text: sigPreimage },
-      (sigText) => {
-        pubSpat.oip042.publish.artifact.signature = sigText
-        this.oipSend(pubSpat, (pubResult) => {
-          postSpatiTxid(pubResult.response[0])
-        })
-      }
-    )
+  
+      this.oipSign({ address: this.publisher, text: sigPreimage },
+        (sigText) => {
+          pubSpat.oip042.publish.artifact.signature = sigText
+          this.oipSend(pubSpat, (pubResult) => {
+            postSpatiTxid(pubResult.response[0])
+          })
+        }
+      )
+    })
   }
 
   createTenure(tenureName,
@@ -239,9 +253,9 @@ export default class Home extends Component {
     let ipfsDAG = 'dummyipfsaddressforthistenure'
     let ipfsFiles = []
 
-    this.captureFile(this.state.propertyForm.documents, (ipfsLocation) => {
+    this.captureFile(files, (ipfsLocation) => {
       ipfsDAG = ipfsLocation
-      this.state.propertyForm.documents.forEach((f, index, array) => {
+      files.forEach((f, index, array) => {
         ipfsFiles.push({ fName: f.name, fSize: f.size, cType: f.type })
       })
 
@@ -523,19 +537,29 @@ export default class Home extends Component {
     let map = document.getElementById('map');
 
     const currentDate = new Date()
+    let tenureDocs = []
+    let spatialDocs = []
+    console.log('publishProperty', this.state.propertyForm.documents)
+    this.state.propertyForm.documents.forEach((item) => {
+        if (item.option.value == "This document proves location.") {
+          spatialDocs.push(item.file)
+        } else {
+          tenureDocs.push(item.file)
+        }
+    })
     this.publishPropertyRecord(this.state.propertyForm.partyName,
       this.state.propertyForm.partyName + " long description",
       currentDate.getFullYear(),
       this.state.propertyForm.spatialName,
       this.state.propertyForm.spatialDescription,
       currentDate.getFullYear(),
-      [],
+      spatialDocs,
       this.state.polygonCoords,
       [],
       this.state.propertyForm.partyName + ' ' + this.state.propertyForm.spatialName,
       this.state.propertyForm.partyName + ' ownership of ' + this.state.propertyForm.spatialName,
       currentDate.getFullYear(),
-      this.state.propertyForm.documents,
+      tenureDocs,
       (party, spatial, tenure) => {
         this.setState({
           results: {

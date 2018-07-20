@@ -1,10 +1,9 @@
-import axios from 'axios';
-
 const API_URL = 'https://testnet.flocha.in/api';
 
 export const getTransaction = (txid, success, failure) => {
   const API_ENDPOINT = 'tx/'
-  const GET_URL = API_URL + API_ENDPOINT + txid
+  const GET_URL = API_URL + '/' + API_ENDPOINT + txid
+
   fetch(GET_URL)
     .then((response) => {
       return response.json()
@@ -21,7 +20,7 @@ export const getTransaction = (txid, success, failure) => {
       }
       success(tx)
     })
-    .then((err) => {
+    .catch((err) => {
       failure(err)
     })
 }

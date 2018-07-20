@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import axios from 'axios';
-import { getTransaction } from './api';
+import { getTransaction } from '../search/api';
 
 import expand from '../../images/expand.svg';
 import docSvg from '../../images/doc-svg.svg';
@@ -69,7 +68,7 @@ export default class StepThree extends Component {
 
   getResults = (results) => {
     console.log(results)
-    setTimeout(() => {
+/*    setTimeout(() => {
       axios
         .all([
           getTransaction(results.tenure),
@@ -84,7 +83,13 @@ export default class StepThree extends Component {
         .catch(error => {
           console.log(error)
         });
+    }, 10000) */
+    setTimeout(() => {
+      getTransaction(results.tenure, (tx) => {console.log('Tenure', tx)}, (err) => {console.log(err)})
+      getTransaction(results.party, (tx) => {console.log('Party', tx)}, (err) => {console.log(err)})
+      getTransaction(results.spatial, (tx) => {console.log('Spatial Unit', tx)}, (err) => {console.log(err)})
     }, 10000)
+
   }
 
   render() {
