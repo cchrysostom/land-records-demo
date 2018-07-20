@@ -1,3 +1,5 @@
+/* eslint-disable no-loop-func */
+
 import React, { Component } from 'react';
 import domtoimage from 'dom-to-image';
 import ipfsAPI from 'ipfs-api';
@@ -5,7 +7,7 @@ import StepOne from './step-one';
 import StepTwo from './step-two';
 import StepThree from './step-three';
 
-export default class Home extends Component {  
+export default class Home extends Component {
   constructor(props) {
     super(props)
     this.state = {
@@ -43,22 +45,22 @@ export default class Home extends Component {
   captureFile(files, captureFileCb) {
     console.log('captureFile', files)
     if (files.length == 0) captureFileCb("thisisadummyipfsdirectory"
-  )
+    )
     let filesCount = files.length
     let loadendCount = filesCount
     let fileAdds = []
-    for (let i=0; i < filesCount; i++) {
-      let file = files[i]
+    for (let i = 0; i < filesCount; i++) {
+      let file = files[i].file
       let reader = new window.FileReader()
-      reader.onloadend = () => { 
-        fileAdds.push({path: file.name, content: Buffer.from(reader.result)})
+      reader.onloadend = () => {
+        fileAdds.push({ path: file.name, content: Buffer.from(reader.result) })
         if (!--loadendCount) this.saveToIpfs(fileAdds, captureFileCb)
       }
       reader.readAsArrayBuffer(file)
     }
   }
 
-  saveToIpfs (fileAdds, saveIpfsCb) {
+  saveToIpfs(fileAdds, saveIpfsCb) {
     let ipfsId
     console.log('saveToIpfs', fileAdds)
 
@@ -75,20 +77,20 @@ export default class Home extends Component {
   }
 
   ipfsGetFile(ipfsHash, fileDownloaded) {
-      this.ipfsApi.files.get((err, files) => {
-        if (err) {
-          console.log(err)
-          return
-        }
+    this.ipfsApi.files.get((err, files) => {
+      if (err) {
+        console.log(err)
+        return
+      }
 
-        files.forEach((file) => {
-          console.log('ipfsGetFile', file.path)
-          console.log('ipfsGetFile', file.content)
+      files.forEach((file) => {
+        console.log('ipfsGetFile', file.path)
+        console.log('ipfsGetFile', file.content)
 
-          const downloadedFile = new File(Buffer.from(file.content), file.path)
-          fileDownloaded(downloadedFile)
-        })
+        const downloadedFile = new File(Buffer.from(file.content), file.path)
+        fileDownloaded(downloadedFile)
       })
+    })
   }
 
   oipSign(signRequest, signResult) {
@@ -230,7 +232,7 @@ export default class Home extends Component {
           }
         }
       }
-  
+
       this.oipSign({ address: this.publisher, text: sigPreimage },
         (sigText) => {
           pubSpat.oip042.publish.artifact.signature = sigText
@@ -353,12 +355,12 @@ export default class Home extends Component {
   handleDocumentSelect = (index, e) => {
     let propertyForm = this.state.propertyForm
     propertyForm.documents.map((docu, i) => {
-      if(index === i) {
+      if (index === i) {
         docu.option.value = e.target.value
       }
       return docu
     })
-    this.setState({propertyForm})
+    this.setState({ propertyForm })
   }
 
   getCurrentLocation = () => {
@@ -541,11 +543,11 @@ export default class Home extends Component {
     let spatialDocs = []
     console.log('publishProperty', this.state.propertyForm.documents)
     this.state.propertyForm.documents.forEach((item) => {
-        if (item.option.value == "This document proves location.") {
-          spatialDocs.push(item.file)
-        } else {
-          tenureDocs.push(item.file)
-        }
+      if (item.option.value == "This document proves location.") {
+        spatialDocs.push(item)
+      } else {
+        tenureDocs.push(item)
+      }
     })
     this.publishPropertyRecord(this.state.propertyForm.partyName,
       this.state.propertyForm.partyName + " long description",
@@ -578,7 +580,7 @@ export default class Home extends Component {
       .then(dataUrl => {
         let img = new Image();
         img.src = dataUrl;
-        
+
         // document.body.appendChild(img);
       })
       .catch(error => {
@@ -596,8 +598,8 @@ export default class Home extends Component {
           </div>
         </div>
         <div className="row">
-          <div className="col-sm-12 col-md-8 offset-md-2">
-            {this.state.step === 1 ? (
+          {this.state.step === 1 ? (
+            <div className="col-sm-12 col-md-8 offset-md-2">
               <StepOne
                 key="step-one"
                 getCurrentLocation={this.getCurrentLocation}
@@ -606,9 +608,11 @@ export default class Home extends Component {
                 propertyForm={this.state.propertyForm}
                 handlePropertyChange={this.handlePropertyChange}
                 loading={this.state.loading}
-                />
-              ) : this.state.step === 2 ? (
-                <StepTwo
+              />
+            </div>
+          ) : this.state.step === 2 ? (
+            <div className="col-sm-12 col-md-8 offset-md-2">
+              <StepTwo
                 key="step-two"
                 handlePropertyChange={this.handlePropertyChange}
                 handleDocumentSelect={this.handleDocumentSelect}
@@ -617,15 +621,15 @@ export default class Home extends Component {
                 publishProperty={this.publishProperty}
                 loading={this.state.loading}
               />
-            ) : (
-                  <StepThree
-                    propertyForm={this.state.propertyForm}
-                    currentLocation={this.state.currentLocation}
-                    polygonCoords={this.state.polygonCoords}
-                    results={this.state.results}
-                  />
-                )}
-          </div>
+            </div>
+          ) : (
+                <StepThree
+                  propertyForm={this.state.propertyForm}
+                  currentLocation={this.state.currentLocation}
+                  polygonCoords={this.state.polygonCoords}
+                  results={this.state.results}
+                />
+              )}
         </div>
       </div>
     )

@@ -15,6 +15,7 @@ export const getTransaction = (txid, success, failure) => {
         fee: json.fees,
         block: json.blockhash,
         received: json.time,
+        blockhash: json.blockhash,
         blocktime: json.blocktime,
         locktime: json.locktime 
       }

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { getTransaction } from '../search/api';
+import TransactionDetails from '../search/TransactionDetails';
+import { BrowserRouter, Route, Link } from 'react-router-dom';
 
 import expand from '../../images/expand.svg';
 import docSvg from '../../images/doc-svg.svg';
@@ -13,7 +15,13 @@ export default class StepThree extends Component {
       results: props.results || {},
       propertyForm: props.propertyForm,
       map: null,
-      polygon: null
+      polygon: null,
+      transactions: {
+        tenure: {},
+        party: {},
+        spatial: {}
+      },
+      loading: false
     }
   }
 
@@ -67,27 +75,38 @@ export default class StepThree extends Component {
   }
 
   getResults = (results) => {
+    let transactions = this.state.transactions;
+    this.setState({loading: true})
     console.log(results)
-/*    setTimeout(() => {
-      axios
-        .all([
-          getTransaction(results.tenure),
-          getTransaction(results.party),
-          getTransaction(results.spatial),
-        ])
-        .then(axios.spread((tenure, party, spatial) => {
-          console.log(tenure)
-          console.log(party)
-          console.log(spatial)
-        }))
-        .catch(error => {
-          console.log(error)
-        });
-    }, 10000) */
+    /*    setTimeout(() => {
+          axios
+            .all([
+              getTransaction(results.tenure),
+              getTransaction(results.party),
+              getTransaction(results.spatial),
+            ])
+            .then(axios.spread((tenure, party, spatial) => {
+              console.log(tenure)
+              console.log(party)
+              console.log(spatial)
+            }))
+            .catch(error => {
+              console.log(error)
+            });
+        }, 10000) */
     setTimeout(() => {
-      getTransaction(results.tenure, (tx) => {console.log('Tenure', tx)}, (err) => {console.log(err)})
-      getTransaction(results.party, (tx) => {console.log('Party', tx)}, (err) => {console.log(err)})
-      getTransaction(results.spatial, (tx) => {console.log('Spatial Unit', tx)}, (err) => {console.log(err)})
+      getTransaction(results.tenure, (tenure) => {
+        transactions.tenure = tenure
+        getTransaction(results.party, (party) => {
+          transactions.party = party
+          getTransaction(results.spatial, (spatial) => {
+            transactions.spatial = spatial
+            this.setState({ transactions: transactions, loading: false })
+          }, (err) => { console.log(err) })
+        }, (err) => { console.log(err) })
+      }, (err) => { console.log(err) })
+
+
     }, 10000)
 
   }
@@ -114,47 +133,59 @@ export default class StepThree extends Component {
     })
 
     return (
-      <div className="row mt-5">
-        <div className="col-sm-12 col-md-8 offset-md-2">
-          <h3>{this.state.propertyForm.spatialName}</h3>
-          <div className="map-container">
-            <div id="map"></div>
-          </div>
-          <div className="form-group property-description mt-3">
-            <label>{this.state.propertyForm.spatialDescription}</label>
-          </div>
-          <hr className="mb-2 mt-3" />
-          <div className="form-group mb-0">
-            <label>Supporting Documents</label>
-          </div>
-          <ul className="list-group" style={{ marginBottom: '2.2rem' }}>
-            {documents}
-          </ul>
-          <hr />
-          <div className="form-group mt-4">
-            <label>Blockchain Status</label>
-            <textarea
-              className="form-control bg-white"
-              rows="10"
-              disabled="true"
-              style={{
-                fontSize: '14px',
-                lineHeight: '20px'
-              }}
-              defaultValue={`Tenure:
+      <BrowserRouter basename="/">
+        <div className="w-100">
+          <Route exact path="/" render={props => {
+            return (
+              <div className="col-sm-12 col-md-8 offset-md-2">
+                <div className="row mt-5">
+                  <div className="col-sm-12 col-md-8 offset-md-2">
+                    <h3>{this.state.propertyForm.spatialName}</h3>
+                    <div className="map-container">
+                      <div id="map"></div>
+                    </div>
+                    <div className="form-group property-description mt-3">
+                      <label>{this.state.propertyForm.spatialDescription}</label>
+                    </div>
+                    <hr className="mb-2 mt-3" />
+                    <div className="form-group mb-0">
+                      <label>Supporting Documents</label>
+                    </div>
+                    <ul className="list-group" style={{ marginBottom: '2.2rem' }}>
+                      {documents}
+                    </ul>
+                    <hr />
+                    <div className="form-group mt-4">
+                      <label>Blockchain Status</label>
+                      <textarea
+                        className="form-control bg-white"
+                        rows="10"
+                        disabled="true"
+                        style={{
+                          fontSize: '14px',
+                          lineHeight: '20px'
+                        }}
+                        defaultValue={`Tenure:
 ${this.state.results.tenure}
 Party:
 ${this.state.results.party}
 Spatial:
 ${this.state.results.spatial}`}
-            >
-            </textarea>
-          </div>
-          <div className="m-auto text-center">
-            <a className="btn btn-primary" href={`https://testnet.flocha.in/tx/${this.state.results.tenure}`} target="_blank">View Blockchain</a>
-          </div>
+                      >
+                      </textarea>
+                    </div>
+                    <div className="m-auto text-center">
+                      <Link className="btn btn-primary" to="/transaction-details">{this.state.loading === true ? <i className="fa fa-spinner fa-spin fa-fw"></i> : 'View Blockchain'}</Link>
+                      {/*<a className="btn btn-primary" href={`https://testnet.flocha.in/tx/${this.state.results.tenure}`} target="_blank">View Blockchain</a>*/}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          }} />
+          <Route path="/transaction-details" render={props => <TransactionDetails {...props} transactions={this.state.transactions} />} />
         </div>
-      </div>
+      </BrowserRouter>
     )
   }
 }
