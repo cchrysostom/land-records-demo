@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://testnet.flocha.in/api/';
+const API_URL = 'https://flosight.mk1.alexandria.io/api/';
 
 const CONFIG = {
   mode: 'no-cors',
