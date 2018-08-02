@@ -45,7 +45,7 @@ export const TransactionCard = props => {
           </ul>
         </div>
       </div>
-      <a href={`https://flosight.mk1.alexandria.io/api/tx/${tx.txId}`} target="_blank" className="d-block pl-3 mb-2 mt-2" style={{ fontSize: '14px', color: '#9CA0A1' }}>View Full Transaction Details <span>›</span></a>
+      <a href={`https://flosight.mk1.alexandria.io/tx/${tx.txId}`} target="_blank" className="d-block pl-3 mb-2 mt-2" style={{ fontSize: '14px', color: '#9CA0A1' }}>View Full Transaction Details <span>›</span></a>
       {location !== '' && !location.includes('dummy') ? (
         <a href={`https://ipfs.io/ipfs/${location}`} target="_blank" className="d-block pl-3 mb-3" style={{ fontSize: '14px', color: '#9CA0A1' }}>View All Supporting Documents <span>›</span></a>
       ) : null}
