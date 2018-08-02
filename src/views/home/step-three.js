@@ -176,7 +176,7 @@ ${this.state.results.spatial}`}
                     </div>
                     <div className="m-auto text-center">
                       <Link className="btn btn-primary" to="/transaction-details">{this.state.loading === true ? <i className="fa fa-spinner fa-spin fa-fw"></i> : 'View Blockchain'}</Link>
-                      {/*<a className="btn btn-primary" href={`https://testnet.flocha.in/tx/${this.state.results.tenure}`} target="_blank">View Blockchain</a>*/}
+                      {/*<a className="btn btn-primary" href={`https://flosight.mk1.alexandria.io/tx/${this.state.results.tenure}`} target="_blank">View Blockchain</a>*/}
                     </div>
                   </div>
                 </div>

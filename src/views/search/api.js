@@ -1,4 +1,4 @@
-const API_URL = 'https://testnet.flocha.in/api';
+const API_URL = 'https://flosight.mk1.alexandria.io/api';
 
 export const getTransaction = (txid, success, failure) => {
   const API_ENDPOINT = 'tx/'

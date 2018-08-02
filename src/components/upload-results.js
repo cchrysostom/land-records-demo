@@ -49,7 +49,7 @@ export default class UploadResults extends Component {
           <textarea className="form-control" rows="4">02a850ef30b64d34ec975728885290860ace32e31c02c37f360fc5c7238d494d49
           3044022039c125147b4f59ab3709ff5e9458bd2a25cb3c6af99e4910c429246de7588fc402205efa6ae25db8e87928dda392af3196f9548…</textarea>
           <div className="m-auto text-center">
-            <a className="btn btn-primary" href={`https://testnet.flocha.in/tx/${props.property.transactionId}`} target="_blank">View Blockchain</a>
+            <a className="btn btn-primary" href={`https://flosight.mk1.alexandria.io/tx/${props.property.transactionId}`} target="_blank">View Blockchain</a>
           </div>
         </div>
       </div>
