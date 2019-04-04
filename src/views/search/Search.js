@@ -13,7 +13,7 @@ export default class Search extends Component {
 
   }
 
-  transaction = () => {
+  transaction () {
     getTransaction({
       transaction: '444e495277fd5c076a3919b461733a7a1afe2a2388fb7c0dd37755327a4bf6c4'
     }, success => {
@@ -23,7 +23,7 @@ export default class Search extends Component {
     })
   }
 
-  address = () => {
+  address () {
     getAddress({
       address: 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
     }, success => {
@@ -33,7 +33,7 @@ export default class Search extends Component {
     })
   }
 
-  addresstransactions = () => {
+  addresstransactions () {
     getTransactionsByAddress({
       address: 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
     }, success => {

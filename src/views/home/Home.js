@@ -3,6 +3,10 @@
 import React, { Component } from 'react';
 import domtoimage from 'dom-to-image';
 import ipfsAPI from 'ipfs-api';
+import { OIP } from '@mlg/js-oip';
+import { PropertyTenure, PropertySpatialUnit, PropertyParty } from '@mlg/js-oip/lib/modules/records/artifact';
+import { Insight } from 'insight-explorer'
+
 import StepOne from './step-one';
 import StepTwo from './step-two';
 import StepThree from './step-three';
@@ -32,38 +36,64 @@ export default class Home extends Component {
       toastMessage: '',
       results: {}
     }
-    this.ipfsApi = ipfsAPI('35.230.92.250', '5001')
-    this.publisher = 'oRnG68BqvRw2qiS8sRbsuEfpRHeFtPDPpr'
-    this.SIGN_URL = 'http://35.230.92.250:41289/alexandria/v1/sign'
-    this.SEND_URL = 'http://35.230.92.250:41289/alexandria/v1/send'
+    this.ipfsApi = ipfsAPI('35.237.201.254', '5001')
+    // publicAddress = 'oKY4JuqYZDBpGwGoWCLLJn1ZJZobhVRXjE'
+    this.publisherPrivateAddress = 'cW5daMp4XPAvibeQxZWQKC38NgPPVRsScuBCdzE16FMEqU7Lzr2a'
+    this.oip = new OIP(this.publisherPrivateAddress, 'testnet')
+
+    // Set wallet to use MLG Web Explorer
+    this.oip.wallet.explorer = new Insight('https://testnet.explorer.mediciland.com/api')
+
+    this.ipfsPin = this.ipfsPin.bind(this)
+    this.saveToIpfs = this.saveToIpfs.bind(this)
+    this.ipfsGetFile = this.ipfsGetFile.bind(this)
+    this.publishGrantor = this.publishGrantor.bind(this)
+    this.publishGrantee = this.publishGrantee.bind(this)
+    this.publishSpatialUnit = this.publishSpatialUnit.bind(this)
+    this.publishTenure = this.publishTenure.bind(this)
+    this.publishPropertyRecord = this.publishPropertyRecord.bind(this)
+    this.handlePropertyChange = this.handlePropertyChange.bind(this)
+    this.handleDocumentSelect = this.handleDocumentSelect.bind(this)
+    this.getCurrentLocation = this.getCurrentLocation.bind(this)
+    this.initMap = this.initMap.bind(this)
+    this.initAutocomplete = this.initAutocomplete.bind(this)
+    this.fillInAddress = this.fillInAddress.bind(this)
+    this.editChange = this.editChange.bind(this)
+    this.submitStepOne = this.submitStepOne.bind(this)
+    this.readFilesIntoObject = this.readFilesIntoObject.bind(this)
+    this.publishProperty = this.publishProperty.bind(this)
   }
 
   componentDidMount() {
     this.initAutocomplete()
   }
 
-  captureFile(files, captureFileCb) {
-    console.log('captureFile', files)
-    if (files.length == 0) captureFileCb("thisisadummyipfsdirectory")
-    let filesCount = files.length
-    let loadendCount = filesCount
-    let fileAdds = []
-    for (let i = 0; i < filesCount; i++) {
-      let file = files[i]
-      let reader = new window.FileReader()
-      reader.onloadend = () => {
-        fileAdds.push({ path: file.name, content: Buffer.from(reader.result) })
-        if (!--loadendCount) this.saveToIpfs(fileAdds, captureFileCb)
+  ipfsPin(files) {
+    return new Promise((resolve, reject) => {
+      console.log('captureFile', files)
+      if (files.length == 0) resolve("thisisadummyipfsdirectory")
+      let filesCount = files.length
+      let loadendCount = filesCount
+      let fileAdds = []
+      for (let i = 0; i < filesCount; i++) {
+        let file = files[i]
+        let reader = new window.FileReader()
+        reader.onloadend = () => {
+          fileAdds.push({ path: file.name, content: Buffer.from(reader.result) })
+          if (!--loadendCount) {
+            let res = this.saveToIpfs(fileAdds, resolve)
+          }
+        }
+        reader.readAsArrayBuffer(file)
       }
-      reader.readAsArrayBuffer(file)
-    }
+    })
   }
 
-  saveToIpfs(fileAdds, saveIpfsCb) {
+  async saveToIpfs(fileAdds, saveIpfsCb) {
     let ipfsId
     console.log('saveToIpfs', fileAdds)
 
-    this.ipfsApi.add(fileAdds, { progress: (prog) => console.log(`received: ${prog}`), wrapWithDirectory: true })
+    let response = await this.ipfsApi.add(fileAdds, { progress: (prog) => console.log(`received: ${prog}`), wrapWithDirectory: true })
       .then((response) => {
         console.log(response)
         // Grab last hash for IPFS dag. Assuming it is the last response.
@@ -92,266 +122,121 @@ export default class Home extends Component {
     })
   }
 
-  oipSign(signRequest, signResult) {
-    console.log(signRequest)
-    let signHeaders = new Headers()
-    signHeaders.append('Content-Type', 'application/json')
+  async publishGrantor(grantorName, grantorDocs){
+    let grantor = new PropertyParty()
+    grantor.setTitle(grantorName)
+    grantor.setDetail('partyName', grantorName)
+    grantor.setDetail('partyType', 'GRANTOR')
 
-    let postInit = {
-      method: 'POST',
-      headers: signHeaders,
-      body: JSON.stringify(signRequest)
+    if (grantorDocs.length > 0){
+      let grantorIPFSLocation = await this.ipfsPin(grantorDocs)
+      grantor.setLocation(grantorIPFSLocation)
+      grantorDocs.forEach((file, index, array) => {
+        grantor.addFile({ fname: file.name, fsize: file.size, ctype: file.type })
+      })
     }
 
-    fetch(this.SIGN_URL, postInit)
-      .then((response) => {
-        return response.json()
-      })
-      .then((json) => {
-        signResult(json.response[0])
-      })
+    let grantorPublish = await this.oip.publish(grantor)
+
+    return grantorPublish
   }
 
-  oipSend(sendRequest, sendResult) {
-    console.log(sendRequest)
-    let sendHeaders = new Headers()
-    sendHeaders.append('Content-Type', 'plain/text')
+  async publishGrantee(granteeName, granteeDocs){
+    let grantee = new PropertyParty()
+    grantee.setTitle(granteeName)
+    grantee.setDetail('partyName', granteeName)
+    grantee.setDetail('partyType', 'GRANTEE')
 
-    let postInit = {
-      method: 'POST',
-      headers: sendHeaders,
-      body: 'json:' + JSON.stringify(sendRequest)
+    if (granteeDocs.length > 0) {
+      let granteeIPFSLocation = await this.ipfsPin(granteeDocs)
+      grantee.setLocation(granteeIPFSLocation)
+      granteeDocs.forEach((file, index, array) => {
+        grantee.addFile({ fname: file.name, fsize: file.size, ctype: file.type })
+      })
     }
 
-    fetch(this.SEND_URL, postInit)
-      .then((response) => {
-        return response.json()
-      })
-      .then((json) => {
-        console.log('/v1/send', JSON.stringify(json))
-        // save this transaction pointer to state in array of transactions
-        sendResult(json)
-      })
+    let granteePublish = await this.oip.publish(grantee)
 
+    return granteePublish
   }
 
-  createParty(partyName, partyDescription, partyYear, postPartyTxid) {
-    let ts = Math.round((new Date()).getTime() / 1000);
-    let dummyLocation = 'dummylocationforparty'
-    let sigPreimage = dummyLocation + '-' + this.publisher + '-' + ts.toString()
+  async publishSpatialUnit(spatialDocs){
+    let form = this.state.propertyForm
 
-    let pubArtifact = {
-      oip042:
-      {
-        publish: {
-          artifact: {
-            floAddress: this.publisher,
-            timestamp: ts,
-            type: 'property',
-            subtype: 'party',
-            info: {
-              title: partyName,
-              description: partyDescription,
-              year: 2018
-            },
-            storage: {
-              network: 'IPFS',
-              location: dummyLocation
-            },
-            details: {
-              ns: 'MLG',
-              partyType: 'naturalPerson', partyRole: 'individual'
-            },
-            signature: ''
-          }
-        }
-      }
+    let spatialUnit = new PropertySpatialUnit()
+    spatialUnit.setTitle(form.spatialIdentifier)
+    spatialUnit.setDetail('officialID', form.spatialIdentifier)
+    spatialUnit.setDetail('spatialType', 'PARCEL')
+    spatialUnit.setDetail('textual', form.legalDescription)
+    spatialUnit.setDetail('addressData', this.state.manualAddress)
+    spatialUnit.setDetail('spatialDataType', 'POLYGON')
+    spatialUnit.setDetail('spatialData', this.state.polygonCoords)
+
+    if (spatialDocs.length > 0) {
+      let spatialUnitIPFSLocation = await this.ipfsPin(spatialDocs)
+      spatialUnit.setLocation(spatialUnitIPFSLocation)
+      spatialDocs.forEach((file, index, array) => {
+        spatialUnit.addFile({ fname: file.name, fsize: file.size, ctype: file.type })
+      })
     }
 
-    this.oipSign({ address: this.publisher, text: sigPreimage },
-      (sigText) => {
-        pubArtifact.oip042.publish.artifact.signature = sigText
-        this.oipSend(pubArtifact, (pubResult) => {
-          postPartyTxid(pubResult.response[0])
-        })
-      }
-    )
+    let spatialUnitPublish = await this.oip.publish(spatialUnit)
+
+    return spatialUnitPublish
   }
 
-  createSpatialUnit(locationName,
-    locationDescription,
-    locationYear,
-    files,
-    polygonCoords,
-    bbox,
-    postSpatiTxid) {
+  async publishTenure(instrumentType, grantorTXID, granteeTXID, spatialTXID, tenureDocs) {
+    let tenure = new PropertyTenure()
+    tenure.setTitle(instrumentType)
+    tenure.setTenureType(instrumentType.toUpperCase())
+    tenure.setParties([
+      { role: 'GRANTOR', party: grantorTXID },
+      { role: 'GRANTEE', party: granteeTXID }
+    ])
+    tenure.setSpatialUnits([ spatialTXID ])
 
-    let ts = Math.round((new Date()).getTime() / 1000);
-    let ipfsDAG = 'dummyipfsaddressforthisspatialunit'
-    let ipfsFiles = []
-    console.log('createSpatialUnit', files)
-
-    this.captureFile(files, (ipfsLocation) => {
-      ipfsDAG = ipfsLocation
-      files.forEach((f, index, array) => {
-        ipfsFiles.push({ fName: f.name, fSize: f.size, cType: f.type })
+    if (tenureDocs.length > 0) {
+      let tenureIPFSLocation = await this.ipfsPin(tenureDocs)
+      tenure.setLocation(tenureIPFSLocation)
+      tenureDocs.forEach((file, index, array) => {
+        tenure.addFile({ fname: file.name, fsize: file.size, ctype: file.type })
       })
-      let sigPreimage = ipfsDAG + '-' + this.publisher + '-' + ts.toString()
+    }
 
-      let pubSpat = {
-        oip042:
-        {
-          publish: {
-            artifact: {
-              floAddress: this.publisher,
-              timestamp: ts,
-              type: 'property',
-              subtype: 'spatialUnit',
-              info: {
-                title: locationName,
-                description: locationDescription,
-                year: locationYear
-              },
-              storage: {
-                network: 'IPFS',
-                location: ipfsDAG,
-                files: ipfsFiles
-              },
-              details: {
-                ns: 'MLG',
-                spatialType: 'polygon',
-                geometry: {
-                  type: 'geojson',
-                  data: { polygonCoords }
-                },
-                bbox: bbox
-              },
-              signature: ''
-            }
-          }
-        }
-      }
+    let tenurePublish = await this.oip.publish(tenure)
 
-      this.oipSign({ address: this.publisher, text: sigPreimage },
-        (sigText) => {
-          pubSpat.oip042.publish.artifact.signature = sigText
-          this.oipSend(pubSpat, (pubResult) => {
-            postSpatiTxid(pubResult.response[0])
-          })
-        }
-      )
-    })
+    return tenurePublish
   }
 
-  createTenure(tenureName,
-    tenureDescription,
-    tenureYearStart,
-    files,
-    partyTxid,
-    spatialUnitTxid,
-    postTenureTxid) {
-    let ts = Math.round((new Date()).getTime() / 1000);
-    let ipfsDAG = 'dummyipfsaddressforthistenure'
-    let ipfsFiles = []
+  async publishPropertyRecord(grantorDocs, granteeDocs, spatialDocs, tenureDocs, postArtifactTxids) {
+    let form = this.state.propertyForm
 
-    this.captureFile(files, (ipfsLocation) => {
-      ipfsDAG = ipfsLocation
-      files.forEach((f, index, array) => {
-        ipfsFiles.push({ fName: f.name, fSize: f.size, cType: f.type })
-      })
+    // Create and publish Grantor
+    let grantorPublish = await this.publishGrantor(form.grantorName, grantorDocs)
+    console.log(grantorPublish)
 
-      let sigPreimage = ipfsDAG + '-' + this.publisher + '-' + ts.toString()
-      let pubTenure = {
-        oip042:
-        {
-          publish: {
-            artifact: {
-              floAddress: this.publisher,
-              timestamp: ts,
-              type: 'property',
-              subtype: 'tenure',
-              info: {
-                title: tenureName,
-                description: tenureDescription,
-                year: tenureYearStart
-              },
-              storage: {
-                network: 'IPFS',
-                location: ipfsDAG,
-                files: ipfsFiles
-              },
-              details: {
-                ns: 'MLG',
-                party: partyTxid,
-                spatialUnit: spatialUnitTxid,
-                tenureType: 'FREEHOLD'
-              },
-              signature: ''
-            }
-          }
-        }
-      }
+    // Create and publish Grantee
+    let granteePublish = await this.publishGrantee(form.granteeName, granteeDocs)
+    console.log(granteePublish)
 
-      this.oipSign({ address: this.publisher, text: sigPreimage },
-        (sigText) => {
-          pubTenure.oip042.publish.artifact.signature = sigText
-          this.oipSend(pubTenure, (pubResult) => {
-            postTenureTxid(pubResult.response[0])
-          })
-        }
-      )
-    })
+    // Create, upload to IPFS, and publish Spatial Unit
+    let spatialUnitPublish = await this.publishSpatialUnit(spatialDocs)
+    console.log(spatialUnitPublish)
+
+    // Create, upload to IPFS, and publish Tenure
+    let tenurePublish = await this.publishTenure(form.instrumentType, grantorPublish.txids[0], granteePublish.txids[0], spatialUnitPublish.txids[0], tenureDocs)
+    console.log(tenurePublish)
+
+    postArtifactTxids(grantorPublish, granteePublish, spatialUnitPublish, tenurePublish)
   }
 
-  publishPropertyRecord(
-    partyName,
-    partyDescription,
-    partyYearStart,
-    locationName,
-    locationDescription,
-    locationYearStart,
-    locationFiles,
-    polygonCoords,
-    bbox,
-    tenureName,
-    tenureDescription,
-    tenureYearStart,
-    tenureFiles,
-    postArtifactTxids
-  ) {
-    let partyTxid = ''
-    let spatialTxid = ''
-    this.createParty(partyName, partyDescription, partyYearStart, (resultPartyTxid) => {
-      partyTxid = resultPartyTxid
-      this.createSpatialUnit(locationName,
-        locationDescription,
-        locationYearStart,
-        locationFiles,
-        polygonCoords,
-        bbox,
-        (resultSpatTxid) => {
-          spatialTxid = resultSpatTxid
-          this.createTenure(tenureName,
-            tenureDescription,
-            tenureYearStart,
-            tenureFiles,
-            partyTxid,
-            spatialTxid,
-            (resultTenureTxid) => {
-              postArtifactTxids(partyTxid, spatialTxid, resultTenureTxid)
-            }
-          )
-        })
-    })
-  }
-
-  handlePropertyChange = (e) => {
+  handlePropertyChange(e) {
     let propertyForm = this.state.propertyForm
     propertyForm[e.target.name] = e.target.value
     this.setState({ propertyForm })
   }
 
-  handleDocumentSelect = (index, e) => {
+  handleDocumentSelect(index, e) {
     let propertyForm = this.state.propertyForm
     propertyForm.documents.map((docu, i) => {
       if (index === i) {
@@ -362,7 +247,7 @@ export default class Home extends Component {
     this.setState({ propertyForm })
   }
 
-  getCurrentLocation = () => {
+  getCurrentLocation() {
     navigator.geolocation.getCurrentPosition(success => {
       this.setState({
         currentLocation: {
@@ -390,7 +275,7 @@ export default class Home extends Component {
       })
   }
 
-  initMap = (position) => {
+  initMap(position) {
     setTimeout(() => {
       let map = this.state.map
       map = new window.google.maps.Map(document.getElementById('map'), {
@@ -402,7 +287,7 @@ export default class Home extends Component {
     }, 500)
   }
 
-  initAutocomplete = () => {
+  initAutocomplete() {
     setTimeout(() => {
       let autocomplete = this.state.autocomplete
       autocomplete = new window.google.maps.places.Autocomplete(document.getElementById('autocomplete'), { types: ['geocode'] });
@@ -411,7 +296,7 @@ export default class Home extends Component {
     }, 500)
   }
 
-  fillInAddress = (e) => {
+  fillInAddress(e) {
     let event = { ...e };
 
     this.setState({ manualAddress: event.target && event.target.value ? event.target.value : '' }, () => {
@@ -442,7 +327,7 @@ export default class Home extends Component {
     })
   }
 
-  setCenterAndCreatePolygon = (map) => {
+  setCenterAndCreatePolygon(map) {
     let centerCoords = this.state.currentLocation;
     centerCoords.lat = parseFloat(centerCoords.lat)
     centerCoords.lng = parseFloat(centerCoords.lng)
@@ -479,8 +364,11 @@ export default class Home extends Component {
 
   }
 
-  editChange = () => {
-    var points = this.state.polygon.getPaths().b[0].b;
+  editChange() {
+
+    console.log(this.state.polygon.getPaths())
+
+    var points = this.state.polygon.getPaths().j[0].j;
     var newPolyPoints = [];
     for (var point of points) {
       var lat = point.lat();
@@ -492,7 +380,7 @@ export default class Home extends Component {
     })
   }
 
-  submitStepOne = (e) => {
+  submitStepOne (e) {
     e.preventDefault();
     if (this.state.manualAddress !== '') {
       this.setState({
@@ -508,7 +396,7 @@ export default class Home extends Component {
     }
   }
 
-  readFilesIntoObject = (e) => {
+  readFilesIntoObject (e) {
     let propertyForm = this.state.propertyForm
     Object.keys(e.target.files).forEach(file => {
       let doc = {
@@ -532,7 +420,7 @@ export default class Home extends Component {
     this.setState({ propertyForm })
   }
 
-  publishProperty = (e) => {
+  publishProperty (e) {
     e.preventDefault();
     this.setState({ loading: true })
     let map = document.getElementById('map');
@@ -540,51 +428,55 @@ export default class Home extends Component {
     const currentDate = new Date()
     let tenureDocs = []
     let spatialDocs = []
+    let grantorDocs = []
+    let granteeDocs = []
     console.log('publishProperty', this.state.propertyForm.documents)
     this.state.propertyForm.documents.forEach((item) => {
-      if (item.option.value == "This document proves location.") {
-        spatialDocs.push(item.file)
-      } else {
-        tenureDocs.push(item.file)
+      console.log(item.option.value)
+      switch (item.option.value) {
+        case "Tenure Document":
+          tenureDocs.push(item.file)
+          break
+        case "Spatial Unit Document":
+          spatialDocs.push(item.file)
+          break
+        case "Grantor Document":
+          grantorDocs.push(item.file)
+          break
+        case "Grantee Document":
+          granteeDocs.push(item.file)
+          break
+        default:
+          tenureDocs.push(item.file)
+          break
       }
     })
-    this.publishPropertyRecord(this.state.propertyForm.partyName,
-      this.state.propertyForm.partyName + " long description",
-      currentDate.getFullYear(),
-      this.state.propertyForm.spatialName,
-      this.state.propertyForm.spatialDescription,
-      currentDate.getFullYear(),
-      spatialDocs,
-      this.state.polygonCoords,
-      [],
-      this.state.propertyForm.partyName + ' ' + this.state.propertyForm.spatialName,
-      this.state.propertyForm.partyName + ' ownership of ' + this.state.propertyForm.spatialName,
-      currentDate.getFullYear(),
-      tenureDocs,
-      (party, spatial, tenure) => {
+    this.publishPropertyRecord(grantorDocs, granteeDocs, spatialDocs, tenureDocs,
+      (grantor, grantee, spatial, tenure) => {
         this.setState({
           results: {
-            party: party,
-            spatial: spatial,
-            tenure: tenure
+            grantor,
+            grantee,
+            spatial,
+            tenure
           },
           step: 3,
           loading: false
         })
-        console.log('Party: ' + party + ', Location: ' + spatial + ', Tenure: ' + tenure)
+        console.log('Grantor: ', grantor, ', Grantee: ', grantee, ', Location: ', spatial, ', Tenure: ', tenure)
       }
     )
 
-    domtoimage.toPng(map)
-      .then(dataUrl => {
-        let img = new Image();
-        img.src = dataUrl;
+    // domtoimage.toPng(map)
+    //   .then(dataUrl => {
+    //     let img = new Image();
+    //     img.src = dataUrl;
 
-        // document.body.appendChild(img);
-      })
-      .catch(error => {
-        console.error('oops, something went wrong!', error);
-      });
+    //     // document.body.appendChild(img);
+    //   })
+    //   .catch(error => {
+    //     console.error('oops, something went wrong!', error);
+    //   });
   }
 
   render() {
