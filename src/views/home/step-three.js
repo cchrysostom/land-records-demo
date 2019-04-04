@@ -35,7 +35,7 @@ export default class StepThree extends Component {
     this.getResults(this.state.results);
   }
 
-  initMap = (position) => {
+  initMap (position) {
     setTimeout(() => {
       let map = this.state.map
       map = new window.google.maps.Map(document.getElementById('map'), {
@@ -47,7 +47,7 @@ export default class StepThree extends Component {
     }, 500)
   }
 
-  setCenterAndCreatePolygon = (map) => {
+  setCenterAndCreatePolygon (map) {
     let centerCoords = this.props.currentLocation;
     centerCoords.lat = parseFloat(centerCoords.lat)
     centerCoords.lng = parseFloat(centerCoords.lng)
@@ -74,40 +74,34 @@ export default class StepThree extends Component {
     polygon.setMap(map);
   }
 
-  getResults = (results) => {
+  getResults (results) {
     let transactions = this.state.transactions;
     this.setState({loading: true})
     console.log(results)
-    /*    setTimeout(() => {
-          axios
-            .all([
-              getTransaction(results.tenure),
-              getTransaction(results.party),
-              getTransaction(results.spatial),
-            ])
-            .then(axios.spread((tenure, party, spatial) => {
-              console.log(tenure)
-              console.log(party)
-              console.log(spatial)
-            }))
-            .catch(error => {
-              console.log(error)
-            });
-        }, 10000) */
-    setTimeout(() => {
-      getTransaction(results.tenure, (tenure) => {
-        transactions.tenure = tenure
-        getTransaction(results.party, (party) => {
-          transactions.party = party
-          getTransaction(results.spatial, (spatial) => {
-            transactions.spatial = spatial
-            this.setState({ transactions: transactions, loading: false })
-          }, (err) => { console.log(err) })
-        }, (err) => { console.log(err) })
-      }, (err) => { console.log(err) })
+    
+    // Load results, then keep looping until the transactions have been confirmed into a block
+    let getResultsLoop = setInterval(async () => {
 
+      let tenure = getTransaction(results.tenure.txids[0])
+      let grantor = getTransaction(results.grantor.txids[0])
+      let grantee = getTransaction(results.grantee.txids[0])
+      let spatial = getTransaction(results.spatial.txids[0])
 
-    }, 10000)
+      let allProms = await Promise.all([tenure, grantor, grantee, spatial])
+
+      transactions.tenure = allProms[0]
+      transactions.grantor = allProms[1]
+      transactions.grantee = allProms[2]
+      transactions.spatial = allProms[3]
+
+      this.setState({ transactions, loading: false })
+
+      if (transactions.tenure.blockhash && transactions.tenure.blockhash !== '' &&
+          transactions.grantor.blockhash && transactions.grantor.blockhash !== '' &&
+          transactions.grantee.blockhash && transactions.grantee.blockhash !== '' &&
+          transactions.spatial.blockhash && transactions.spatial.blockhash !== '')
+        clearInterval(getResultsLoop)
+    }, 1000)
 
   }
 
@@ -140,12 +134,12 @@ export default class StepThree extends Component {
               <div className="col-sm-12 col-md-8 offset-md-2">
                 <div className="row mt-5">
                   <div className="col-sm-12 col-md-8 offset-md-2">
-                    <h3>{this.state.propertyForm.spatialName}</h3>
+                    <h3>{this.state.propertyForm.spatialIdentifier}</h3>
                     <div className="map-container">
                       <div id="map"></div>
                     </div>
                     <div className="form-group property-description mt-3">
-                      <label>{this.state.propertyForm.spatialDescription}</label>
+                      <label>{this.state.propertyForm.legalDescription}</label>
                     </div>
                     <hr className="mb-2 mt-3" />
                     <div className="form-group mb-0">
@@ -165,25 +159,23 @@ export default class StepThree extends Component {
                           fontSize: '14px',
                           lineHeight: '20px'
                         }}
-                        defaultValue={`Tenure:
-${this.state.results.tenure}
-Party:
-${this.state.results.party}
-Spatial:
-${this.state.results.spatial}`}
+                        defaultValue={`Tenure: ${this.state.results.tenure.txids}
+Grantor Party: ${this.state.results.grantor.txids}
+Grantee Party: ${this.state.results.grantee.txids}
+Spatial Unit: ${this.state.results.spatial.txids}`}
                       >
                       </textarea>
                     </div>
                     <div className="m-auto text-center">
                       <Link className="btn btn-primary" to="/transaction-details">{this.state.loading === true ? <i className="fa fa-spinner fa-spin fa-fw"></i> : 'View Blockchain'}</Link>
-                      {/*<a className="btn btn-primary" href={`https://flosight.mk1.alexandria.io/tx/${this.state.results.tenure}`} target="_blank">View Blockchain</a>*/}
+                      {/*<a className="btn btn-primary" href={`https://testnet.explorer.mediciland.com/tx/${this.state.results.tenure}`} target="_blank">View Blockchain</a>*/}
                     </div>
                   </div>
                 </div>
               </div>
             )
           }} />
-          <Route path="/transaction-details" render={props => <TransactionDetails {...props} transactions={this.state.transactions} />} />
+          <Route path="/transaction-details" render={props => <TransactionDetails {...props} transactions={this.state.transactions} results={this.state.results} />} />
         </div>
       </BrowserRouter>
     )

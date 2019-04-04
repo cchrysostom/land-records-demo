@@ -15,10 +15,12 @@ const StepTwo = props => {
         <div className="list-meta">
           <div className="title">{docu.file.name}</div>
           <select name="type" className="form-control mt-2" onChange={props.handleDocumentSelect.bind(this, i)}>
-            <option value="">Please select document type</option>
-            <option value="This document proves ownership.">This document proves ownership.</option>
-            <option value="This document proves location.">This document proves location.</option>
-            <option value="Other">Other (uncategorized).</option>
+            <option value="">Please select document type...</option>
+            <option value="Tenure Document">This document is an Instrument</option>
+            <option value="Grantor Document">This document proves Grantor identity</option>
+            <option value="Grantee Document">This document proves Grantee identity</option>
+            <option value="Spatial Unit Document">This document proves location</option>
+            <option value="Other">Other (uncategorized)</option>
           </select>
         </div>
         <span className="actions ml-auto">
@@ -35,17 +37,30 @@ const StepTwo = props => {
       </div>
       <div style={{ maxWidth: '480px' }} className="m-auto">
         <div className="form-group">
-          <label>Property Name (Required)</label>
-          <input name="spatialName" value={props.propertyForm.spatialName} type="text" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange} />
+          <label>Parcel Identifier (Required)</label>
+          <input name="spatialIdentifier" value={props.propertyForm.spatialIdentifier} type="text" placeholder="12-34-567" className="form-control" onChange={props.handlePropertyChange} />
         </div>
         <div className="form-group">
-          <label>Property Description (Required)</label>
-          <textarea name="spatialDescription" value={props.propertyForm.spatialDescription} rows="5" placeholder="Enter Text" className="form-control" onChange={props.handlePropertyChange}></textarea>
+          <label>Legal Description (Required)</label>
+          <textarea name="legalDescription" value={props.propertyForm.legalDescription} rows="5" placeholder="Legal description of the property..." className="form-control" onChange={props.handlePropertyChange}></textarea>
         </div>
         <div className="form-group">
-          <label className="d-block mb-3">Add Supporting Documents (Optional)</label>
-          <input type="file" name="documents" id="documents" placeholder="Choose Files" className="inputfile btn btn-sm btn-outline-primary d-block" style={{ minWidth: '200px' }} onChange={props.readFilesIntoObject} multiple />
-          <label htmlFor="documents" className="d-block d-md-inline-block">Choose Files</label>
+          <label>Grantor (Required)</label>
+          <input name="grantorName" value={props.propertyForm.grantorName} type="text" placeholder="Grantor Name" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Grantee (Required)</label>
+          <input name="granteeName" value={props.propertyForm.granteeName} type="text" placeholder="Grantee Name" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Instrument Type (Required)</label>
+          <input name="instrumentType" value={props.propertyForm.instrumentType} type="text" placeholder="Morgage, Release, Warranty Deed, etc" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Supporting Documents (Optional)</label>
+          <br />
+          <input type="file" name="documents" id="documents" placeholder="Choose File(s)" className="inputfile btn btn-sm btn-outline-primary d-block" style={{ minWidth: '200px' }} onChange={props.readFilesIntoObject} multiple />
+          <label htmlFor="documents" className="d-block d-md-inline-block">Choose File(s)</label>
         </div>
         {props.propertyForm.documents.length > 0 ? (
           <div className="form-group form-files">
@@ -53,11 +68,8 @@ const StepTwo = props => {
               {documents}
             </ul>
           </div>
-        ) : (
-          <div className="form-group mb-5">
-            <textarea rows="12" className="form-control bg-white" disabled="true" placeholder="Upload Documents supporting this property belongs to you. (eg. JPG, PNG, PDF, TIFF, TXT, MPEG3, MPEG4)"></textarea>
-          </div>
-        )}
+        ) : ''}
+        <hr />
         <div className="form-group m-auto text-center">
           <button type="submit" className="btn btn-primary btn-sm" style={{ minWidth: '180px' }} onClick={props.publishProperty}>{props.loading === true ? <i className="fa fa-spinner fa-spin fa-fw"></i> : 'Publish Property'}</button>
         </div>

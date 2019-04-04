@@ -1,0 +1,23 @@
+.header-container {
+    align-items: center;
+    background-color: #008fff;
+    display: flex;
+    height: 83px;
+    justify-content: center;
+    left: 0;
+    padding: 0 10px!important;
+    position: fixed;
+    transition: height .5s ease;
+    width: 100%;
+    z-index: 2;
+}
+
+.header-container .header-wrapper {
+    align-items: center;
+    line-height: 4px;
+    width: 100%;
+}
+.content-width {
+    margin: 0 auto;
+    max-width: 1000px;
+}

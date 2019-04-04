@@ -12,7 +12,7 @@ const App = () => (
     <div id="app-container">
       <Header />
       <div className="app-content">
-        <div className="container">      
+        <div className="container-fluid">      
           <Routes />
         </div>
       </div>

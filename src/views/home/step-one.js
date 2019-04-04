@@ -6,23 +6,8 @@ const StepOne = props => {
   }
   return (
     <div className="text-center mt-5">
-      <h1 className="mb-5">Welcome!<br />Please input your name &amp; location.</h1>
+      <h1 className="mb-5">Welcome!<br />Please input your location.</h1>
       <form onSubmit={props.submitStepOne}>
-        <div className="m-auto" style={{ maxWidth: '480px' }}>
-          <div className="form-group mb-5">
-            <label className="text-left d-block ml-2 mb-2">Name</label>
-            <input
-              type="text"
-              name="partyName"
-              required
-              value={props.propertyForm.partyName}
-              className="form-control mb-3"
-              placeholder="Your Name"
-              onChange={props.handlePropertyChange}
-            />
-          </div>
-        </div>
-        <hr />
         <div className="m-auto" style={{ maxWidth: '480px' }}>
           <div className="form-group mt-5">
             <label className="text-left d-block ml-2 mb-2">Address</label>

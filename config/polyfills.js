@@ -1,5 +1,9 @@
 'use strict';
 
+// Import core-js to polyfill for `@mlg/js-oip` for now
+// require('core-js')
+require('@babel/polyfill')
+
 if (typeof Promise === 'undefined') {
   // Rejection tracking prevents a common issue where React gets into an
   // inconsistent state due to an error, but it gets swallowed by a Promise,
