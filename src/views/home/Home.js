@@ -40,6 +40,7 @@ export default class Home extends Component {
     // publicAddress = 'oKY4JuqYZDBpGwGoWCLLJn1ZJZobhVRXjE'
     this.publisherPrivateAddress = 'cW5daMp4XPAvibeQxZWQKC38NgPPVRsScuBCdzE16FMEqU7Lzr2a'
     this.oip = new OIP(this.publisherPrivateAddress, 'testnet')
+    this.namespace = "MLG.PAYMENT.DEMO"
 
     // Set wallet to use MLG Web Explorer
     this.oip.wallet.explorer = new Insight('https://testnet.explorer.mediciland.com/api')
@@ -124,6 +125,7 @@ export default class Home extends Component {
 
   async publishGrantor(grantorName, grantorDocs){
     let grantor = new PropertyParty()
+    grantor.setNamespace(this.namespace)
     grantor.setTitle(grantorName)
     grantor.setDetail('partyName', grantorName)
     grantor.setDetail('partyType', 'GRANTOR')
@@ -143,6 +145,7 @@ export default class Home extends Component {
 
   async publishGrantee(granteeName, granteeDocs){
     let grantee = new PropertyParty()
+    grantee.setNamespace(this.namespace)
     grantee.setTitle(granteeName)
     grantee.setDetail('partyName', granteeName)
     grantee.setDetail('partyType', 'GRANTEE')
@@ -164,6 +167,7 @@ export default class Home extends Component {
     let form = this.state.propertyForm
 
     let spatialUnit = new PropertySpatialUnit()
+    spatialUnit.setNamespace(this.namespace)
     spatialUnit.setTitle(form.spatialIdentifier)
     spatialUnit.setDetail('officialID', form.spatialIdentifier)
     spatialUnit.setDetail('spatialType', 'PARCEL')
@@ -200,6 +204,7 @@ export default class Home extends Component {
    */
   async publishTenure(instrumentType, grantorTXID, granteeTXID, spatialTXID, tenureDocs) {
     let tenure = new PropertyTenure()
+    tenure.setNamespace(this.namespace)
     tenure.setTitle(instrumentType)
     tenure.setTenureType(instrumentType.toUpperCase())
     tenure.setParties([
