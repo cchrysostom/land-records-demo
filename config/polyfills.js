@@ -1,6 +1,6 @@
 'use strict';
 
-// Import core-js to polyfill for `@mlg/js-oip` for now
+// Import core-js to polyfill for `js-oip` for now
 // require('core-js')
 require('@babel/polyfill')
 

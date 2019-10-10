@@ -2,9 +2,9 @@
 
 import React, { Component } from 'react';
 import domtoimage from 'dom-to-image';
-import ipfsAPI from 'ipfs-api';
-import { OIP } from '@mlg/js-oip';
-import { PropertyTenure, PropertySpatialUnit, PropertyParty } from '@mlg/js-oip/lib/modules/records/artifact';
+import ipfsAPI from 'ipfs-http-client';
+import { OIP } from 'js-oip';
+import { PropertyTenure, PropertySpatialUnit, PropertyParty } from 'js-oip/lib/modules/records/artifact';
 import { Insight } from 'insight-explorer'
 
 import StepOne from './step-one';
@@ -36,7 +36,7 @@ export default class Home extends Component {
       toastMessage: '',
       results: {}
     }
-    this.ipfsApi = ipfsAPI('35.237.201.254', '5001')
+    this.ipfsApi = ipfsAPI('34.82.102.62', '5001')
     // publicAddress = 'oKY4JuqYZDBpGwGoWCLLJn1ZJZobhVRXjE'
     this.publisherPrivateAddress = 'cW5daMp4XPAvibeQxZWQKC38NgPPVRsScuBCdzE16FMEqU7Lzr2a'
     this.oip = new OIP(this.publisherPrivateAddress, 'testnet')
@@ -185,6 +185,19 @@ export default class Home extends Component {
     return spatialUnitPublish
   }
 
+  /* Payment reference
+
+      "payment": {
+        "addresses": [],
+        "retailer": 15,
+        "sugTip": [],
+        "fiat": "USD",
+        "scale": "1000:1",
+        "promoter": 15,
+        "maxdisc": 30
+      },
+
+   */
   async publishTenure(instrumentType, grantorTXID, granteeTXID, spatialTXID, tenureDocs) {
     let tenure = new PropertyTenure()
     tenure.setTitle(instrumentType)
@@ -195,11 +208,17 @@ export default class Home extends Component {
     ])
     tenure.setSpatialUnits([ spatialTXID ])
 
+    // ==== Payment hack ====
+    tenure.addSinglePaymentAddress("FLO", "oKY4JuqYZDBpGwGoWCLLJn1ZJZobhVRXjE")
+    tenure.setRetailerCut(20)
+    tenure.setPromoterCut(30)
+    // ======================
+
     if (tenureDocs.length > 0) {
       let tenureIPFSLocation = await this.ipfsPin(tenureDocs)
       tenure.setLocation(tenureIPFSLocation)
       tenureDocs.forEach((file, index, array) => {
-        tenure.addFile({ fname: file.name, fsize: file.size, ctype: file.type })
+        tenure.addFile({ fname: file.name, fsize: file.size, ctype: file.type, sugBuy: 1 })
       })
     }
 
@@ -368,7 +387,7 @@ export default class Home extends Component {
 
     console.log(this.state.polygon.getPaths())
 
-    var points = this.state.polygon.getPaths().j[0].j;
+    var points = this.state.polygon.getPaths().g[0].g;
     var newPolyPoints = [];
     for (var point of points) {
       var lat = point.lat();
