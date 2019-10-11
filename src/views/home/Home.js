@@ -37,8 +37,11 @@ export default class Home extends Component {
       results: {}
     }
     this.ipfsApi = ipfsAPI('34.82.102.62', '5001')
-    // publicAddress = 'oKY4JuqYZDBpGwGoWCLLJn1ZJZobhVRXjE'
-    this.publisherPrivateAddress = 'cW5daMp4XPAvibeQxZWQKC38NgPPVRsScuBCdzE16FMEqU7Lzr2a'
+
+    // -------- Demonstration City Registry Address ----------
+    // publicAddress = 'oepdjsGgK1UcubRaHaUrYw1SKT1mRGJanB'
+    this.publisherPrivateAddress = 'cVceM8FuqUs4sKuDYybGqKvLTpB5DPZpKvypdnS29CmqjbBTbNnC'
+    // -------------------------------------------------------
     this.oip = new OIP(this.publisherPrivateAddress, 'testnet')
     this.namespace = "MLG.PAYMENT.DEMO"
 
