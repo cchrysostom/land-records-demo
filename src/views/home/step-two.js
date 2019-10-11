@@ -49,6 +49,26 @@ const StepTwo = props => {
           <textarea name="legalDescription" value={props.propertyForm.legalDescription} rows="5" placeholder="Legal description of the property..." className="form-control" onChange={props.handlePropertyChange}></textarea>
         </div>
         <div className="form-group">
+          <label>Township</label>
+          <input name="township" value={props.propertyForm.township} type="text" placeholder="Township name" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Range</label>
+          <input name="mbrange" value={props.propertyForm.mbrange} type="text" placeholder="Range number" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Section</label>
+          <input name="section" value={props.propertyForm.section} type="text" placeholder="Section number" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Unit</label>
+          <input name="propertyUnit" value={props.propertyForm.propertyUnit} type="text" placeholder="Unit number" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
+          <label>Lot</label>
+          <input name="lot" value={props.propertyForm.lot} type="text" placeholder="Unit number" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
           <label>Grantor (Required)</label>
           <input name="grantorName" value={props.propertyForm.grantorName} type="text" placeholder="Grantor Name" className="form-control" onChange={props.handlePropertyChange} />
         </div>
