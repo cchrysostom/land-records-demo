@@ -37,6 +37,10 @@ const StepTwo = props => {
       </div>
       <div style={{ maxWidth: '480px' }} className="m-auto">
         <div className="form-group">
+          <label>Property Activity or Event (Required)</label>
+          <input name="activityIdentifier" value={props.propertyForm.activityIdentifier} type="text" placeholder="DEED-12-34-567" className="form-control" onChange={props.handlePropertyChange} />
+        </div>
+        <div className="form-group">
           <label>Parcel Identifier (Required)</label>
           <input name="spatialIdentifier" value={props.propertyForm.spatialIdentifier} type="text" placeholder="12-34-567" className="form-control" onChange={props.handlePropertyChange} />
         </div>

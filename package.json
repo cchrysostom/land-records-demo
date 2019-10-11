@@ -53,7 +53,7 @@
     "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
     "start-js": "node scripts/start.js",
     "start": "serve -s build",
-    "start:dev": "npm-run-all -p watch-css start-js",
+    "start:dev": "PORT=3500 npm-run-all -p watch-css start-js",
     "deploy": "npm run build && gcloud app deploy --project=mlg-dev --quiet",
     "build-js": "node scripts/build.js",
     "build": "npm-run-all build-css build-js",

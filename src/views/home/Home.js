@@ -176,6 +176,15 @@ export default class Home extends Component {
     spatialUnit.setDetail('spatialDataType', 'POLYGON')
     spatialUnit.setDetail('spatialData', this.state.polygonCoords)
 
+    let attrs = {
+      'RCLegal.RCSubDivision.Township': form.township ? form.township : 'Sepcapis',
+      'RCLegal.RCSubDivision.Range': form.mbrange ? form.mbrange : 'Qisnou',
+      'RCLegal.RCSubDivision.Section': form.section ? form.section : '1',
+      'RCLegal.Unit': form.propertyUnit ? form.propertyUnit : '00',
+      'RCLegal.Lot2': form.lot ? form.lot : '0000'
+    }
+    spatialUnit.setAttributes(attrs)
+
     if (spatialDocs.length > 0) {
       let spatialUnitIPFSLocation = await this.ipfsPin(spatialDocs)
       spatialUnit.setLocation(spatialUnitIPFSLocation)
@@ -202,22 +211,29 @@ export default class Home extends Component {
       },
 
    */
-  async publishTenure(instrumentType, grantorTXID, granteeTXID, spatialTXID, tenureDocs) {
+  async publishTenure(tenureActivityID, instrumentType, grantorTXID, granteeTXID, spatialTXID, tenureDocs) {
     let tenure = new PropertyTenure()
     tenure.setNamespace(this.namespace)
-    tenure.setTitle(instrumentType)
+    tenure.setTitle(tenureActivityID)
     tenure.setTenureType(instrumentType.toUpperCase())
     tenure.setParties([
-      { role: 'GRANTOR', party: grantorTXID },
-      { role: 'GRANTEE', party: granteeTXID }
+      {role: 'GRANTOR', party: grantorTXID},
+      {role: 'GRANTEE', party: granteeTXID}
     ])
-    tenure.setSpatialUnits([ spatialTXID ])
+    tenure.setSpatialUnits([spatialTXID])
 
     // ==== Payment hack ====
     tenure.addSinglePaymentAddress("FLO", "oKY4JuqYZDBpGwGoWCLLJn1ZJZobhVRXjE")
     tenure.setRetailerCut(20)
     tenure.setPromoterCut(30)
     // ======================
+
+    let attrs = {
+      'RCRecorder.EntryNumber': tenureActivityID,
+      'RCInstrument.Description': instrumentType.toUpperCase()
+    }
+
+    tenure.setAttributes(attrs)
 
     if (tenureDocs.length > 0) {
       let tenureIPFSLocation = await this.ipfsPin(tenureDocs)
@@ -248,7 +264,12 @@ export default class Home extends Component {
     console.log(spatialUnitPublish)
 
     // Create, upload to IPFS, and publish Tenure
-    let tenurePublish = await this.publishTenure(form.instrumentType, grantorPublish.txids[0], granteePublish.txids[0], spatialUnitPublish.txids[0], tenureDocs)
+    let tenurePublish = await this.publishTenure(form.activityIdentifier,
+      form.instrumentType,
+      grantorPublish.txids[0],
+      granteePublish.txids[0],
+      spatialUnitPublish.txids[0],
+      tenureDocs)
     console.log(tenurePublish)
 
     postArtifactTxids(grantorPublish, granteePublish, spatialUnitPublish, tenurePublish)
